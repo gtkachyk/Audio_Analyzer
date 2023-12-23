@@ -48,7 +48,7 @@ public class MainController implements Initializable {
     }
 
     /**
-     *
+     * Adds a new audio track.
      */
     @FXML
     private void addTrack(){
