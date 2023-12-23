@@ -1,0 +1,8 @@
+
+.menu .label{
+    -fx-text-fill: black;
+}
+
+.menu-item .label{
+    -fx-text-fill: black;
+}
