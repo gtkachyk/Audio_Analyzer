@@ -129,7 +129,7 @@ public class MasterTrack extends Track{
                     syncButton.setText("Unlock");
                     synced = true;
                     for(AudioTrack track: MainController.audioTracks){
-                        bindSliders(timeSlider, track.timeSlider);
+                        bindSliderValueProperties(timeSlider, track.timeSlider);
                     }
                 }
             }
@@ -145,7 +145,7 @@ public class MasterTrack extends Track{
      * @param sliderOne
      * @param sliderTwo
      */
-    public void bindSliders(Slider sliderOne, Slider sliderTwo) {
+    public void bindSliderValueProperties(Slider sliderOne, Slider sliderTwo) {
         sliderTwo.valueProperty().bindBidirectional(sliderOne.valueProperty());
     }
 
@@ -160,6 +160,10 @@ public class MasterTrack extends Track{
 
     public void bindOnMouseClickedProperty(Slider sliderOne, Slider sliderTwo){
         sliderOne.onMouseClickedProperty().bindBidirectional(sliderTwo.onMouseClickedProperty());
+    }
+
+    public void bindLabelValueProperties(Label labelOne, Label labelTwo){
+        labelOne.textProperty().bind(labelTwo.textProperty());
     }
 
     // TODO: Bind labels.

@@ -67,11 +67,13 @@ public class MainController implements Initializable {
 
             // Update master track length even if not synced.
             masterTrack.bindSliderMaxValueProperties(masterTrack.timeSlider, longestAudioTrack.timeSlider);
+            masterTrack.bindLabelValueProperties(masterTrack.totalTimeLabel, longestAudioTrack.totalTimeLabel);
+            masterTrack.bindLabelValueProperties(masterTrack.currentTimeLabel, longestAudioTrack.currentTimeLabel);
         }
 
         // Sync master track with newly added audio track if needed.
         if(masterTrack.synced){
-            masterTrack.bindSliders(masterTrack.timeSlider, audioTrack.timeSlider);
+            masterTrack.bindSliderValueProperties(masterTrack.timeSlider, audioTrack.timeSlider);
             masterTrack.bindOnMouseClickedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
         }
     }
