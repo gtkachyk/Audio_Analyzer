@@ -27,6 +27,7 @@ public abstract class Track {
     static final double TIME_SLIDER_WIDTH = 232.0;
     static final double CURRENT_TIME_LABEL_WIDTH = 43.6;
     static final double TOTAL_TIME_LABEL_WIDTH = 32.4;
+    static final double VOLUME_SLIDER_MAX = 1.0;
 
     int trackNumber;
     TrackCoordinates trackCoordinates;
