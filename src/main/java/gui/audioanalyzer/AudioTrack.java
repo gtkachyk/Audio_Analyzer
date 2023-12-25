@@ -216,7 +216,8 @@ public class AudioTrack extends Track{
         mediaPlayer.setOnEndOfMedia(new Runnable() {
             @Override
             public void run() {
-                PPRButton.setGraphic(ivRestart);
+//                PPRButton.setGraphic(ivRestart);
+                PPRButton.setText("Restart");
                 atEndOfMedia = true;
                 if(!currentTimeLabel.textProperty().equals(totalTimeLabel.textProperty())){
                     currentTimeLabel.textProperty().unbind();
@@ -277,13 +278,20 @@ public class AudioTrack extends Track{
         for(int i = 0; i < labelTotalTime.length(); i++){
             if(labelTime.charAt(i) != labelTotalTime.charAt(i)){
                 atEndOfMedia = false;
-                if(isPlaying) PPRButton.setGraphic(ivPause);
-                else PPRButton.setGraphic(ivPlay);
+                if(isPlaying){
+//                    PPRButton.setGraphic(ivPause);
+                    PPRButton.setText("Pause");
+                }
+                else{
+//                    PPRButton.setGraphic(ivPlay);
+                    PPRButton.setText("Play");
+                }
                 return;
             }
         }
         atEndOfMedia = true;
-        PPRButton.setGraphic(ivRestart);
+//        PPRButton.setGraphic(ivRestart);
+        PPRButton.setText("Restart");
     }
 
     AudioTrackCoordinates getTrackCoordinates(){
