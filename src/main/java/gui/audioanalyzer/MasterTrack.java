@@ -1,5 +1,6 @@
 package gui.audioanalyzer;
 
+import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -121,17 +122,12 @@ public class MasterTrack extends Track{
                 if(synced){
                     syncButton.setText("Sync");
                     synced = false;
-                    for(AudioTrack track: MainController.audioTracks){
-//                        timeSlider.valueProperty().unbind();
-                        track.timeSlider.valueProperty().unbind();
-                    }
+                    unSync();
                 }
                 else{
                     syncButton.setText("Unlock");
                     synced = true;
-                    for(AudioTrack track: MainController.audioTracks){
-                        bindSliderValueProperties(timeSlider, track.timeSlider);
-                    }
+                    // TODO: Add ability to re-sync after un-syncing.
                 }
             }
         });
@@ -167,5 +163,16 @@ public class MasterTrack extends Track{
         labelOne.textProperty().bind(labelTwo.textProperty());
     }
 
-    // TODO: Bind labels.
+    /**
+     * Unbinds all bound properties of the master track.
+     */
+    public void unSync(){
+        timeSlider.maxProperty().unbind();
+        currentTimeLabel.textProperty().unbind();
+        totalTimeLabel.textProperty().unbind();
+        for(AudioTrack track: MainController.audioTracks){
+            Bindings.unbindBidirectional(timeSlider.valueProperty(), track.timeSlider.valueProperty());
+            Bindings.unbindBidirectional(track.timeSlider.onMouseClickedProperty(), timeSlider.onMouseClickedProperty());
+        }
+    }
 }
