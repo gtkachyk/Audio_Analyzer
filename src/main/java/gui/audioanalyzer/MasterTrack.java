@@ -94,24 +94,25 @@ public class MasterTrack extends Track{
     @Override
     void initializeTrack() {
         // Load button images.
-        final int IV_SIZE = 25;
-        Image imagePlay = new Image(new File("src/images/play_button.png").toURI().toString());
-        ivPlay = new ImageView(imagePlay);
-        ivPlay.setFitHeight(IV_SIZE);
-        ivPlay.setFitWidth(IV_SIZE);
-
-        Image imagePause = new Image(new File("src/images/pause_button.jpg").toURI().toString());
-        ivPause = new ImageView(imagePause);
-        ivPause.setFitHeight(IV_SIZE);
-        ivPause.setFitWidth(IV_SIZE);
-
-        Image imageRestart = new Image(new File("src/images/restart_button.jpg").toURI().toString());
-        ivRestart = new ImageView(imageRestart);
-        ivRestart.setFitHeight(IV_SIZE);
-        ivRestart.setFitWidth(IV_SIZE);
+//        final int IV_SIZE = 15;
+//        Image imagePlay = new Image(new File("src/images/play_button.png").toURI().toString());
+//        ivPlay = new ImageView(imagePlay);
+//        ivPlay.setFitHeight(IV_SIZE);
+//        ivPlay.setFitWidth(IV_SIZE);
+//
+//        Image imagePause = new Image(new File("src/images/pause_button.jpg").toURI().toString());
+//        ivPause = new ImageView(imagePause);
+//        ivPause.setFitHeight(IV_SIZE);
+//        ivPause.setFitWidth(IV_SIZE);
+//
+//        Image imageRestart = new Image(new File("src/images/restart_button.jpg").toURI().toString());
+//        ivRestart = new ImageView(imageRestart);
+//        ivRestart.setFitHeight(IV_SIZE);
+//        ivRestart.setFitWidth(IV_SIZE);
 
         // Set initial button images.
-        PPRButton.setGraphic(ivPlay);
+//        PPRButton.setGraphic(ivPlay);
+        PPRButton.setText("Play");
 
         // Add listeners.
         syncButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
