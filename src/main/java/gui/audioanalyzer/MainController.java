@@ -74,6 +74,7 @@ public class MainController implements Initializable {
         // Sync master track with newly added audio track if needed.
         if(masterTrack.synced){
             masterTrack.bindSliderValueProperties(masterTrack.timeSlider, audioTrack.timeSlider);
+            masterTrack.bindSliderValueProperties(masterTrack.volumeSlider, audioTrack.volumeSlider);
             masterTrack.bindOnMouseClickedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
         }
     }

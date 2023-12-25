@@ -54,6 +54,7 @@ public class MasterTrack extends Track{
 
         volumeSlider = new Slider();
         initializeTrackObject(volumeSlider, getTrackCoordinates().volumeSliderX, getTrackCoordinates().volumeSliderY, VOLUME_SLIDER_WIDTH, SLIDER_HEIGHT);
+        volumeSlider.setMax(VOLUME_SLIDER_MAX);
         volumeSlider.setValue(volumeSlider.getMax());
         anchorPaneChildren.add(volumeSlider);
 
@@ -172,6 +173,7 @@ public class MasterTrack extends Track{
         bindLabelValueProperties(currentTimeLabel, MainController.longestAudioTrack.currentTimeLabel);
         for(AudioTrack track: MainController.audioTracks){
             bindSliderValueProperties(timeSlider, track.timeSlider);
+            bindSliderValueProperties(volumeSlider, track.volumeSlider); // Bind volumes.
             bindOnMouseClickedProperty(timeSlider, track.timeSlider);
         }
     }
@@ -186,6 +188,7 @@ public class MasterTrack extends Track{
         for(AudioTrack track: MainController.audioTracks){
             Bindings.unbindBidirectional(timeSlider.valueProperty(), track.timeSlider.valueProperty());
             Bindings.unbindBidirectional(track.timeSlider.onMouseClickedProperty(), timeSlider.onMouseClickedProperty());
+            Bindings.unbindBidirectional(volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
         }
     }
 }

@@ -167,7 +167,6 @@ public class AudioTrack extends Track{
                     isMuted = false;
                 }
                 else{
-                    System.out.println("Muted");
                     isMuted = true;
                 }
             }
@@ -242,7 +241,6 @@ public class AudioTrack extends Track{
                 // Un-mute audio after scrubbing.
                 mediaPlayer.setMute(false);
                 isMuted = false;
-                System.out.println("Unmuted from scrubbing");
 
                 // Update time label.
             }
@@ -254,7 +252,6 @@ public class AudioTrack extends Track{
                 // Mute audio if scrubbing.
                 mediaPlayer.setMute(true);
                 isMuted = true;
-                System.out.println("Muted for scrubbing");
             }
         });
     }
