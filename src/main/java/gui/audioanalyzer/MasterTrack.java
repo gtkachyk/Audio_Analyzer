@@ -127,7 +127,7 @@ public class MasterTrack extends Track{
                 else{
                     syncButton.setText("Unlock");
                     synced = true;
-                    // TODO: Add ability to re-sync after un-syncing.
+                    sync();
                 }
             }
         });
@@ -161,6 +161,19 @@ public class MasterTrack extends Track{
 
     public void bindLabelValueProperties(Label labelOne, Label labelTwo){
         labelOne.textProperty().bind(labelTwo.textProperty());
+    }
+
+    /**
+     * Binds properties of this master track and all AudioTracks needed to synchronize them.
+     */
+    private void sync(){
+        bindSliderMaxValueProperties(timeSlider, MainController.longestAudioTrack.timeSlider);
+        bindLabelValueProperties(totalTimeLabel, MainController.longestAudioTrack.totalTimeLabel);
+        bindLabelValueProperties(currentTimeLabel, MainController.longestAudioTrack.currentTimeLabel);
+        for(AudioTrack track: MainController.audioTracks){
+            bindSliderValueProperties(timeSlider, track.timeSlider);
+            bindOnMouseClickedProperty(timeSlider, track.timeSlider);
+        }
     }
 
     /**
