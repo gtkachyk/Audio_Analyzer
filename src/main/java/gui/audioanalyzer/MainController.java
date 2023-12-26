@@ -73,11 +73,11 @@ public class MainController implements Initializable {
 
         // Sync master track with newly added audio track if needed.
         if(masterTrack.synced){
-            masterTrack.bindSliderValueProperties(masterTrack.timeSlider, audioTrack.timeSlider);
-            masterTrack.bindSliderValueProperties(masterTrack.volumeSlider, audioTrack.volumeSlider);
-            masterTrack.bindOnMouseClickedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
-            masterTrack.bindOnDragDetectedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
-            masterTrack.bindOnMouseReleasedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
+            masterTrack.bindSliderValueProperties(audioTrack.timeSlider, masterTrack.timeSlider);
+            masterTrack.bindSliderValueProperties(audioTrack.volumeSlider, masterTrack.volumeSlider);
+            masterTrack.bindSliderOnMouseClickedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
+            masterTrack.bindSliderOnDragDetectedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
+            masterTrack.bindSliderOnMouseReleasedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
             masterTrack.bindButtonTextProperties(masterTrack.PPRButton, audioTrack.PPRButton);
         }
     }

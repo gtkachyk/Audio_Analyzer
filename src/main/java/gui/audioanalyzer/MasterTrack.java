@@ -181,39 +181,64 @@ public class MasterTrack extends Track{
     }
 
     /**
-     *
-     * @param sliderOne
-     * @param sliderTwo
+     * Binds the valueProperty of two sliders to each other. Binding is bidirectional.
+     * @param sliderOne The first slider to bind.
+     * @param sliderTwo The second slider to bind.
      */
     public void bindSliderValueProperties(Slider sliderOne, Slider sliderTwo) {
-        sliderTwo.valueProperty().bindBidirectional(sliderOne.valueProperty());
+        sliderOne.valueProperty().bindBidirectional(sliderTwo.valueProperty());
     }
 
     /**
-     *
-     * @param sliderOne The slider whose maxProperty will not be bound.
-     * @param sliderTwo The slider whose maxProperty will be bound to sliderTwo.
+     * Binds the maxProperty of sliderOne to sliderTwo. Binding is unidirectional.
+     * @param sliderOne The slider whose maxProperty will be bound to sliderTwo.
+     * @param sliderTwo The slider whose maxProperty will not be bound.
      */
     public void bindSliderMaxValueProperties(Slider sliderOne, Slider sliderTwo){
         sliderOne.maxProperty().bind(sliderTwo.maxProperty());
     }
 
-    public void bindOnMouseClickedProperty(Slider sliderOne, Slider sliderTwo){
+    /**
+     * Binds the onMouseClicked property of two sliders to each other. Binding is bidirectional.
+     * @param sliderOne The first slider to bind.
+     * @param sliderTwo The second slider to bind.
+     */
+    public void bindSliderOnMouseClickedProperty(Slider sliderOne, Slider sliderTwo){
         sliderOne.onMouseClickedProperty().bindBidirectional(sliderTwo.onMouseClickedProperty());
     }
 
-    public void bindOnDragDetectedProperty(Slider sliderOne, Slider sliderTwo){
+    /**
+     * Binds the onDragDetected property of two sliders to each other. Binding is bidirectional.
+     * @param sliderOne The first slider to bind.
+     * @param sliderTwo The second slider to bind.
+     */
+    public void bindSliderOnDragDetectedProperty(Slider sliderOne, Slider sliderTwo){
         sliderOne.onDragDetectedProperty().bindBidirectional(sliderTwo.onDragDetectedProperty());
     }
 
-    public void bindOnMouseReleasedProperty(Slider sliderOne, Slider sliderTwo){
+    /**
+     * Binds the onMouseReleased property of two sliders to each other. Binding is bidirectional.
+     * @param sliderOne The first slider to bind.
+     * @param sliderTwo The second slider to bind.
+     */
+    public void bindSliderOnMouseReleasedProperty(Slider sliderOne, Slider sliderTwo){
         sliderOne.onMouseReleasedProperty().bindBidirectional(sliderTwo.onMouseReleasedProperty());
     }
 
+    /**
+     * Binds the textProperty of labelOne to labelTwo. Binding is unidirectional.
+     * @param labelOne The label whose textProperty will be bound to labelTwo.
+     * @param labelTwo The label whose textProperty will not be bound.
+     */
     public void bindLabelValueProperties(Label labelOne, Label labelTwo){
         labelOne.textProperty().bind(labelTwo.textProperty());
     }
 
+    /**
+     * Binds the textProperty of buttonOne to buttonTwo. Binding is unidirectional.
+     * @param buttonOne The button whose textProperty will be bound to buttonTwo.
+     * @param buttonTwo The button whose textProperty will not be bound.
+     */
     public void bindButtonTextProperties(Button buttonOne, Button buttonTwo){
         buttonTwo.textProperty().bindBidirectional(buttonOne.textProperty());
     }
@@ -222,17 +247,22 @@ public class MasterTrack extends Track{
      * Binds properties of this master track and all AudioTracks needed to synchronize them.
      */
     private void sync(){
+        // Remove the listener from the time slider value property.
         timeSlider.valueProperty().removeListener(timeSliderChangeListener);
+
+        // Create unidirectional bindings.
         bindSliderMaxValueProperties(timeSlider, MainController.longestAudioTrack.timeSlider);
         bindLabelValueProperties(totalTimeLabel, MainController.longestAudioTrack.totalTimeLabel);
         bindLabelValueProperties(currentTimeLabel, MainController.longestAudioTrack.currentTimeLabel);
+
+        // Create bidirectional bindings.
         for(AudioTrack track: MainController.audioTracks){
             track.pauseTime = timeSlider.getValue(); // Update pause time so all tracks resume from the position of the master track time slider.
-            bindSliderValueProperties(timeSlider, track.timeSlider);
-            bindSliderValueProperties(volumeSlider, track.volumeSlider); // Bind volumes.
-            bindOnMouseClickedProperty(timeSlider, track.timeSlider);
-            bindOnDragDetectedProperty(timeSlider, track.timeSlider);
-            bindOnMouseReleasedProperty(timeSlider, track.timeSlider);
+            bindSliderValueProperties(track.timeSlider, timeSlider);
+            bindSliderValueProperties(track.volumeSlider, volumeSlider); // Bind volumes.
+            bindSliderOnMouseClickedProperty(timeSlider, track.timeSlider);
+            bindSliderOnDragDetectedProperty(timeSlider, track.timeSlider);
+            bindSliderOnMouseReleasedProperty(timeSlider, track.timeSlider);
             bindButtonTextProperties(PPRButton, track.PPRButton);
         }
     }
@@ -241,10 +271,12 @@ public class MasterTrack extends Track{
      * Unbinds all bound properties of the master track.
      */
     public void unSync(){
+        // Unbind unidirectional bindings.
         timeSlider.maxProperty().unbind();
         currentTimeLabel.textProperty().unbind();
         totalTimeLabel.textProperty().unbind();
 
+        // Unbind bidirectional bindings.
         for(AudioTrack track: MainController.audioTracks){
             Bindings.unbindBidirectional(timeSlider.valueProperty(), track.timeSlider.valueProperty());
             Bindings.unbindBidirectional(track.timeSlider.onMouseClickedProperty(), timeSlider.onMouseClickedProperty());
@@ -254,10 +286,12 @@ public class MasterTrack extends Track{
             Bindings.unbindBidirectional(PPRButton.textProperty(), track.PPRButton.textProperty());
         }
 
+        // These properties linger if not set to null. Unbinding them alone does not remove them.
         timeSlider.onMouseClickedProperty().set(null);
         timeSlider.onMouseReleasedProperty().set(null);
         timeSlider.onDragDetectedProperty().set(null);
 
+        // Add a listener to the time slider to update the current time label when unsynced.
         timeSlider.valueProperty().addListener(timeSliderChangeListener);
     }
 }
