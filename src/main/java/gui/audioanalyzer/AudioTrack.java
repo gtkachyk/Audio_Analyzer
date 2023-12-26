@@ -5,17 +5,14 @@ import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
@@ -33,13 +30,16 @@ public class AudioTrack extends Track{
     private boolean isMuted = false;
     double pauseTime;
 
+    private MasterTrack masterTrack; // The master track that controls this audio track.
+
     // JavaFX objects.
     @FXML
     Separator upperSeparator;
     @FXML
     Label audioLabel;
 
-    public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates){
+    public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates, MasterTrack masterTrack){
+        this.masterTrack = masterTrack;
         this.trackNumber = trackNumber;
         trackCoordinates = coordinates;
 
@@ -125,30 +125,30 @@ public class AudioTrack extends Track{
         PPRButton.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
-                if(!MainController.masterTrack.synced){
-                    if(MainController.masterTrack.PPRButton.getText().equals("Play")){
+                if(!masterTrack.synced){
+                    if(masterTrack.PPRButton.getText().equals("Play")){
                         if(newValue.equals("Pause")){
                             boolean allTracksPlaying = true;
-                            for(AudioTrack track: MainController.audioTracks){
+                            for(AudioTrack track: masterTrack.audioTracks){
                                 if(!track.PPRButton.getText().equals("Pause")){
                                     allTracksPlaying = false;
                                 }
                             }
                             if(allTracksPlaying){
-                                MainController.masterTrack.PPRButton.setText("Pause");
+                                masterTrack.PPRButton.setText("Pause");
                             }
                         }
                     }
-                    else if(MainController.masterTrack.PPRButton.getText().equals("Pause")){
+                    else if(masterTrack.PPRButton.getText().equals("Pause")){
                         if(newValue.equals("Play")){
                             boolean allTracksPaused = true;
-                            for(AudioTrack track: MainController.audioTracks){
+                            for(AudioTrack track: masterTrack.audioTracks){
                                 if(!track.PPRButton.getText().equals("Play")){
                                     allTracksPaused = false;
                                 }
                             }
                             if(allTracksPaused){
-                                MainController.masterTrack.PPRButton.setText("Play");
+                                masterTrack.PPRButton.setText("Play");
                             }
                         }
                     }
@@ -180,6 +180,16 @@ public class AudioTrack extends Track{
                 bindCurrentTimeLabel();
                 timeSlider.setMax(newDuration.toSeconds());
                 totalTimeLabel.setText(getTime(newDuration));
+
+                // Update the longest track in masterTrack.
+                if(masterTrack.longestAudioTrack == null || mediaPlayer.getTotalDuration().toSeconds() > masterTrack.longestAudioTrack.mediaPlayer.getTotalDuration().toSeconds()){
+                    masterTrack.longestAudioTrack = AudioTrack.this;
+
+                    // Update master track length even if not synced.
+                    masterTrack.bindSliderMaxValueProperties(masterTrack.timeSlider, timeSlider);
+                    masterTrack.bindLabelValueProperties(masterTrack.totalTimeLabel, totalTimeLabel);
+                    masterTrack.bindLabelValueProperties(masterTrack.currentTimeLabel, currentTimeLabel);
+                }
             }
         });
 

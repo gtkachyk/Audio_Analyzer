@@ -3,17 +3,18 @@ package gui.audioanalyzer;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
 import javafx.util.Duration;
+
+import java.util.ArrayList;
+//import static gui.audioanalyzer.MainController.audioTracks;
+//import static gui.audioanalyzer.MainController.longestAudioTrack;
 
 public class MasterTrack extends Track{
 
@@ -41,7 +42,12 @@ public class MasterTrack extends Track{
         }
     };
 
-    public MasterTrack(MasterTrackCoordinates masterTrackCoordinates){
+    ArrayList<AudioTrack> audioTracks = new ArrayList<>();
+    AudioTrack longestAudioTrack = null;
+    int numberOfAudioTracks = 0;
+
+    public MasterTrack(MasterTrackCoordinates masterTrackCoordinates, MainController controller){
+        Track.controller = controller;
         trackNumber = 0;
         trackCoordinates = masterTrackCoordinates;
 
@@ -107,6 +113,26 @@ public class MasterTrack extends Track{
             }
         });
 
+        addTrackButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                numberOfAudioTracks++;
+                AudioTrack audioTrack = new AudioTrack(numberOfAudioTracks, new AudioTrackCoordinates(numberOfAudioTracks), MasterTrack.this);
+                controller.showAudioTrack(audioTrack);
+                audioTracks.add(audioTrack);
+
+                // Sync master track with newly added audio track if needed.
+                if(synced){
+                    bindSliderValueProperties(audioTrack.timeSlider, timeSlider);
+                    bindSliderValueProperties(audioTrack.volumeSlider, volumeSlider);
+                    bindSliderOnMouseClickedProperty(timeSlider, audioTrack.timeSlider);
+                    bindSliderOnDragDetectedProperty(timeSlider, audioTrack.timeSlider);
+                    bindSliderOnMouseReleasedProperty(timeSlider, audioTrack.timeSlider);
+                    bindButtonTextProperties(PPRButton, audioTrack.PPRButton);
+                }
+            }
+        });
+
         // The PPR button will play all tracks from their current position.
         // When not synced, the PPR button should read 'Pause' only if all audio tracks are playing.
         // And it should read 'Play' otherwise.
@@ -117,7 +143,7 @@ public class MasterTrack extends Track{
             public void handle(ActionEvent actionEvent) {
                 if(PPRButton.getText().equals("Pause")){
                     PPRButton.setText("Play");
-                    for(AudioTrack track: MainController.audioTracks){
+                    for(AudioTrack track: audioTracks){
                         // Pause all playing tracks.
                         if(track.isPlaying){
                             track.PPRButton.fire();
@@ -129,7 +155,7 @@ public class MasterTrack extends Track{
                 }
                 else if(PPRButton.getText().equals("Play")){
                     PPRButton.setText("Pause");
-                    for(AudioTrack track: MainController.audioTracks){
+                    for(AudioTrack track: audioTracks){
                         // Play all paused tracks.
                         if(!track.isPlaying){
                             track.PPRButton.fire();
@@ -215,12 +241,12 @@ public class MasterTrack extends Track{
         timeSlider.valueProperty().removeListener(timeSliderChangeListener);
 
         // Create unidirectional bindings.
-        bindSliderMaxValueProperties(timeSlider, MainController.longestAudioTrack.timeSlider);
-        bindLabelValueProperties(totalTimeLabel, MainController.longestAudioTrack.totalTimeLabel);
-        bindLabelValueProperties(currentTimeLabel, MainController.longestAudioTrack.currentTimeLabel);
+        bindSliderMaxValueProperties(timeSlider, longestAudioTrack.timeSlider);
+        bindLabelValueProperties(totalTimeLabel, longestAudioTrack.totalTimeLabel);
+        bindLabelValueProperties(currentTimeLabel, longestAudioTrack.currentTimeLabel);
 
         // Create bidirectional bindings.
-        for(AudioTrack track: MainController.audioTracks){
+        for(AudioTrack track: audioTracks){
             track.pauseTime = timeSlider.getValue(); // Update pause time so all tracks resume from the position of the master track time slider.
             bindSliderValueProperties(track.timeSlider, timeSlider);
             bindSliderValueProperties(track.volumeSlider, volumeSlider); // Bind volumes.
@@ -241,7 +267,7 @@ public class MasterTrack extends Track{
         totalTimeLabel.textProperty().unbind();
 
         // Unbind bidirectional bindings.
-        for(AudioTrack track: MainController.audioTracks){
+        for(AudioTrack track: audioTracks){
             Bindings.unbindBidirectional(timeSlider.valueProperty(), track.timeSlider.valueProperty());
             Bindings.unbindBidirectional(track.timeSlider.onMouseClickedProperty(), timeSlider.onMouseClickedProperty());
             Bindings.unbindBidirectional(volumeSlider.valueProperty(), track.volumeSlider.valueProperty());

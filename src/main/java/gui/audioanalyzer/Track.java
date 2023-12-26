@@ -5,7 +5,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.util.Duration;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -30,7 +29,6 @@ public abstract class Track {
 
     int trackNumber;
     TrackCoordinates trackCoordinates;
-    // AudioTrackCoordinates audioTrackCoordinates;
 
     // JavaFX objects.
     @FXML
@@ -49,6 +47,8 @@ public abstract class Track {
     Label currentTimeLabel;
     @FXML
     Label totalTimeLabel;
+
+    static MainController controller;
 
     /**
      *

@@ -4,15 +4,11 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -20,10 +16,7 @@ public class MainController implements Initializable {
     // Data.
     @FXML
     AnchorPane anchorPane;
-    static MasterTrack masterTrack;
-    static int numberOfAudioTracks = 0;
-    static ArrayList<AudioTrack> audioTracks = new ArrayList<>();
-    static AudioTrack longestAudioTrack = null;
+    private MasterTrack masterTrack; // Private so masterTrack can't access itself through masterTrack.controller.
 
     // Methods.
     /**
@@ -33,8 +26,9 @@ public class MainController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        // Add one master track and audio track at the start.
         addMasterTrack();
-        addTrack();
+        masterTrack.addTrackButton.fire();
     }
 
     /**
@@ -52,6 +46,10 @@ public class MainController implements Initializable {
         }
     }
 
+    /**
+     * Adds JavaFX elements of a Track to anchorPane.
+     * @param track The Track to show.
+     */
     void showTrack(Track track){
         ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
         anchorPaneChildren.add(track.trackLabel);
@@ -64,6 +62,10 @@ public class MainController implements Initializable {
         anchorPaneChildren.add(track.totalTimeLabel);
     }
 
+    /**
+     * Adds JavaFX elements unique to MasterTrack to anchorPane.
+     * @param track The MasterTrack to show.
+     */
     void showMasterTrack(MasterTrack track){
         showTrack(track);
         ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
@@ -73,6 +75,10 @@ public class MainController implements Initializable {
         anchorPaneChildren.add(track.addTrackButton);
     }
 
+    /**
+     * Adds JavaFX elements unique to AudioTrack to anchorPane.
+     * @param track The AudioTrack to show.
+     */
     void showAudioTrack(AudioTrack track){
         showTrack(track);
         ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
@@ -80,44 +86,8 @@ public class MainController implements Initializable {
         anchorPaneChildren.add(track.audioLabel);
     }
 
-    /**
-     * Adds a new audio track.
-     */
-    @FXML
-    void addTrack(){
-        // Resize stage.
-//        stage = (Stage) anchorPane.getScene().getWindow();
-//        double stageHeight = stage.getHeight();
-//        stage.setHeight(stageHeight * 1.5);
-
-        numberOfAudioTracks++;
-        AudioTrack audioTrack = new AudioTrack(numberOfAudioTracks, new AudioTrackCoordinates(numberOfAudioTracks));
-        showAudioTrack(audioTrack);
-        audioTracks.add(audioTrack);
-
-        // Update the longest track.
-        if(longestAudioTrack == null || audioTrack.mediaPlayer.getTotalDuration().toSeconds() > longestAudioTrack.mediaPlayer.getTotalDuration().toSeconds()){
-            longestAudioTrack = audioTrack;
-
-            // Update master track length even if not synced.
-            masterTrack.bindSliderMaxValueProperties(masterTrack.timeSlider, longestAudioTrack.timeSlider);
-            masterTrack.bindLabelValueProperties(masterTrack.totalTimeLabel, longestAudioTrack.totalTimeLabel);
-            masterTrack.bindLabelValueProperties(masterTrack.currentTimeLabel, longestAudioTrack.currentTimeLabel);
-        }
-
-        // Sync master track with newly added audio track if needed.
-        if(masterTrack.synced){
-            masterTrack.bindSliderValueProperties(audioTrack.timeSlider, masterTrack.timeSlider);
-            masterTrack.bindSliderValueProperties(audioTrack.volumeSlider, masterTrack.volumeSlider);
-            masterTrack.bindSliderOnMouseClickedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
-            masterTrack.bindSliderOnDragDetectedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
-            masterTrack.bindSliderOnMouseReleasedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
-            masterTrack.bindButtonTextProperties(masterTrack.PPRButton, audioTrack.PPRButton);
-        }
-    }
-
     private void addMasterTrack(){
-        masterTrack = new MasterTrack(new MasterTrackCoordinates());
+        masterTrack = new MasterTrack(new MasterTrackCoordinates(), this);
         showMasterTrack(masterTrack);
     }
 }
