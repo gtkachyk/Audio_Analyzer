@@ -154,6 +154,42 @@ public class AudioTrack extends Track{
             }
         });
 
+        // This is needed to ensure that when the PPR button is pressed, the appropriate change is made to the master track PPR button text.
+        // This does not need to be used when the tracks are synced because bindings produce the desired behaviour in that case.
+        PPRButton.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+                if(!MainController.masterTrack.synced){
+                    if(MainController.masterTrack.PPRButton.getText().equals("Play")){
+                        if(newValue.equals("Pause")){
+                            boolean allTracksPlaying = true;
+                            for(AudioTrack track: MainController.audioTracks){
+                                if(!track.PPRButton.getText().equals("Pause")){
+                                    allTracksPlaying = false;
+                                }
+                            }
+                            if(allTracksPlaying){
+                                MainController.masterTrack.PPRButton.setText("Pause");
+                            }
+                        }
+                    }
+                    else if(MainController.masterTrack.PPRButton.getText().equals("Pause")){
+                        if(newValue.equals("Play")){
+                            boolean allTracksPaused = true;
+                            for(AudioTrack track: MainController.audioTracks){
+                                if(!track.PPRButton.getText().equals("Play")){
+                                    allTracksPaused = false;
+                                }
+                            }
+                            if(allTracksPaused){
+                                MainController.masterTrack.PPRButton.setText("Play");
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         // Bidirectionally bind volume slider value to volume property of media player.
         mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
         bindCurrentTimeLabel();

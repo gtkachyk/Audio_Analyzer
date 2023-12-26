@@ -15,7 +15,7 @@ public class MainController implements Initializable {
     // Data.
     @FXML
     private AnchorPane anchorPane;
-    private MasterTrack masterTrack;
+    static MasterTrack masterTrack;
     private int numberOfAudioTracks = 0;
     public static ArrayList<AudioTrack> audioTracks = new ArrayList<>();
     static AudioTrack longestAudioTrack = null;

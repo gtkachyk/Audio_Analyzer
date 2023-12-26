@@ -137,6 +137,10 @@ public class MasterTrack extends Track{
         });
 
         // The PPR button will play all tracks from their current position.
+        // When not synced, the PPR button should read 'Pause' only if all audio tracks are playing.
+        // And it should read 'Play' otherwise.
+        // If it reads 'Play' it should force all tracks to play when pressed.
+        // If it reads 'Pause' it should force all tracks to pause when pressed.
         PPRButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
