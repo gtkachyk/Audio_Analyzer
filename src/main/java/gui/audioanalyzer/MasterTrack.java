@@ -1,7 +1,10 @@
 package gui.audioanalyzer;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -132,6 +135,34 @@ public class MasterTrack extends Track{
                 }
             }
         });
+
+        // The PPR button will play all tracks from their current position.
+        PPRButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                if(PPRButton.getText().equals("Pause")){
+                    PPRButton.setText("Play");
+                    for(AudioTrack track: MainController.audioTracks){
+                        // Pause all playing tracks.
+                        if(track.isPlaying){
+                            track.PPRButton.fire();
+                            if(track.atEndOfMedia){
+                                track.PPRButton.fire();
+                            }
+                        }
+                    }
+                }
+                else if(PPRButton.getText().equals("Play")){
+                    PPRButton.setText("Pause");
+                    for(AudioTrack track: MainController.audioTracks){
+                        // Play all paused tracks.
+                        if(!track.isPlaying){
+                            track.PPRButton.fire();
+                        }
+                    }
+                }
+            }
+        });
     }
 
     MasterTrackCoordinates getTrackCoordinates(){
@@ -172,6 +203,10 @@ public class MasterTrack extends Track{
         labelOne.textProperty().bind(labelTwo.textProperty());
     }
 
+    public void bindButtonTextProperties(Button buttonOne, Button buttonTwo){
+        buttonTwo.textProperty().bindBidirectional(buttonOne.textProperty());
+    }
+
     /**
      * Binds properties of this master track and all AudioTracks needed to synchronize them.
      */
@@ -185,6 +220,7 @@ public class MasterTrack extends Track{
             bindOnMouseClickedProperty(timeSlider, track.timeSlider);
             bindOnDragDetectedProperty(timeSlider, track.timeSlider);
             bindOnMouseReleasedProperty(timeSlider, track.timeSlider);
+            bindButtonTextProperties(PPRButton, track.PPRButton);
         }
     }
 
@@ -202,10 +238,12 @@ public class MasterTrack extends Track{
             Bindings.unbindBidirectional(volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
             Bindings.unbindBidirectional(track.timeSlider.onDragDetectedProperty(), timeSlider.onDragDetectedProperty());
             Bindings.unbindBidirectional(track.timeSlider.onMouseReleasedProperty(), timeSlider.onMouseReleasedProperty());
+            Bindings.unbindBidirectional(PPRButton.textProperty(), track.PPRButton.textProperty());
         }
 
         timeSlider.onMouseClickedProperty().set(null);
         timeSlider.onMouseReleasedProperty().set(null);
         timeSlider.onDragDetectedProperty().set(null);
+
     }
 }
