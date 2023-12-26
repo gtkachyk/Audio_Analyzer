@@ -33,7 +33,7 @@ public class AudioTrack extends Track{
     boolean atEndOfMedia = false;
     boolean isPlaying = false;
     private boolean isMuted = false;
-    private double pauseTime;
+    double pauseTime;
 
     // JavaFX objects.
     @FXML

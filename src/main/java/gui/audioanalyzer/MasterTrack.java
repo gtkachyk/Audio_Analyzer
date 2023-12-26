@@ -227,6 +227,7 @@ public class MasterTrack extends Track{
         bindLabelValueProperties(totalTimeLabel, MainController.longestAudioTrack.totalTimeLabel);
         bindLabelValueProperties(currentTimeLabel, MainController.longestAudioTrack.currentTimeLabel);
         for(AudioTrack track: MainController.audioTracks){
+            track.pauseTime = timeSlider.getValue(); // Update pause time so all tracks resume from the position of the master track time slider.
             bindSliderValueProperties(timeSlider, track.timeSlider);
             bindSliderValueProperties(volumeSlider, track.volumeSlider); // Bind volumes.
             bindOnMouseClickedProperty(timeSlider, track.timeSlider);
