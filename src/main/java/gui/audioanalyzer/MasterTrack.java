@@ -15,6 +15,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.util.Duration;
 
 import java.io.File;
 
@@ -36,6 +37,12 @@ public class MasterTrack extends Track{
 
     // Other data.
     boolean synced = true;
+    private final ChangeListener<Number> timeSliderChangeListener = new ChangeListener<Number>() {
+        @Override
+        public void changed(ObservableValue observableValue, Number oldValue, Number newValue) {
+            currentTimeLabel.setText(getTime(new Duration(timeSlider.getValue() * 1000.0)) + " / ");
+        }
+    };
 
     public MasterTrack(MasterTrackCoordinates masterTrackCoordinates, AnchorPane anchorPane){
         trackNumber = 0;
@@ -215,6 +222,7 @@ public class MasterTrack extends Track{
      * Binds properties of this master track and all AudioTracks needed to synchronize them.
      */
     private void sync(){
+        timeSlider.valueProperty().removeListener(timeSliderChangeListener);
         bindSliderMaxValueProperties(timeSlider, MainController.longestAudioTrack.timeSlider);
         bindLabelValueProperties(totalTimeLabel, MainController.longestAudioTrack.totalTimeLabel);
         bindLabelValueProperties(currentTimeLabel, MainController.longestAudioTrack.currentTimeLabel);
@@ -249,5 +257,6 @@ public class MasterTrack extends Track{
         timeSlider.onMouseReleasedProperty().set(null);
         timeSlider.onDragDetectedProperty().set(null);
 
+        timeSlider.valueProperty().addListener(timeSliderChangeListener);
     }
 }
