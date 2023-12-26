@@ -4,7 +4,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,10 +31,6 @@ public abstract class Track {
     int trackNumber;
     TrackCoordinates trackCoordinates;
     // AudioTrackCoordinates audioTrackCoordinates;
-
-    ImageView ivPlay;
-    ImageView ivPause;
-    ImageView ivRestart;
 
     // JavaFX objects.
     @FXML

@@ -1,7 +1,12 @@
 package gui.audioanalyzer;
 
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -14,10 +19,10 @@ public class MainController implements Initializable {
 
     // Data.
     @FXML
-    private AnchorPane anchorPane;
+    AnchorPane anchorPane;
     static MasterTrack masterTrack;
-    private int numberOfAudioTracks = 0;
-    public static ArrayList<AudioTrack> audioTracks = new ArrayList<>();
+    static int numberOfAudioTracks = 0;
+    static ArrayList<AudioTrack> audioTracks = new ArrayList<>();
     static AudioTrack longestAudioTrack = null;
 
     // Methods.
@@ -47,18 +52,47 @@ public class MainController implements Initializable {
         }
     }
 
+    void showTrack(Track track){
+        ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
+        anchorPaneChildren.add(track.trackLabel);
+        anchorPaneChildren.add(track.lowerVolumeLabel);
+        anchorPaneChildren.add(track.volumeSlider);
+        anchorPaneChildren.add(track.raiseVolumeLabel);
+        anchorPaneChildren.add(track.PPRButton);
+        anchorPaneChildren.add(track.timeSlider);
+        anchorPaneChildren.add(track.currentTimeLabel);
+        anchorPaneChildren.add(track.totalTimeLabel);
+    }
+
+    void showMasterTrack(MasterTrack track){
+        showTrack(track);
+        ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
+        anchorPaneChildren.add(track.focusTrackLabel);
+        anchorPaneChildren.add(track.switchButton);
+        anchorPaneChildren.add(track.syncButton);
+        anchorPaneChildren.add(track.addTrackButton);
+    }
+
+    void showAudioTrack(AudioTrack track){
+        showTrack(track);
+        ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
+        anchorPaneChildren.add(track.upperSeparator);
+        anchorPaneChildren.add(track.audioLabel);
+    }
+
     /**
      * Adds a new audio track.
      */
     @FXML
-    private void addTrack(){
+    void addTrack(){
         // Resize stage.
 //        stage = (Stage) anchorPane.getScene().getWindow();
 //        double stageHeight = stage.getHeight();
 //        stage.setHeight(stageHeight * 1.5);
 
         numberOfAudioTracks++;
-        AudioTrack audioTrack = new AudioTrack(numberOfAudioTracks, new AudioTrackCoordinates(numberOfAudioTracks), anchorPane);
+        AudioTrack audioTrack = new AudioTrack(numberOfAudioTracks, new AudioTrackCoordinates(numberOfAudioTracks));
+        showAudioTrack(audioTrack);
         audioTracks.add(audioTrack);
 
         // Update the longest track.
@@ -83,6 +117,7 @@ public class MainController implements Initializable {
     }
 
     private void addMasterTrack(){
-        masterTrack = new MasterTrack(new MasterTrackCoordinates(), anchorPane);
+        masterTrack = new MasterTrack(new MasterTrackCoordinates());
+        showMasterTrack(masterTrack);
     }
 }

@@ -14,8 +14,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.media.Media;
@@ -37,57 +35,45 @@ public class AudioTrack extends Track{
 
     // JavaFX objects.
     @FXML
-    private Separator upperSeparator;
+    Separator upperSeparator;
     @FXML
-    private Label audioLabel;
+    Label audioLabel;
 
-    public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates, AnchorPane anchorPane){
+    public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates){
         this.trackNumber = trackNumber;
         trackCoordinates = coordinates;
 
-        ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
-
         upperSeparator = new Separator();
         initializeTrackObject(upperSeparator, 0.0, getTrackCoordinates().upperSeparatorY, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
-        anchorPaneChildren.add(upperSeparator);
 
         trackLabel = new Label("Track " + this.trackNumber);
         initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
-        anchorPaneChildren.add(trackLabel);
 
         audioLabel = new Label("song title " + this.trackNumber);
         initializeTrackObject(audioLabel, getTrackCoordinates().audioLabelX, getTrackCoordinates().audioLabelY, AUDIO_LABEL_WIDTH, LABEL_HEIGHT);
-        anchorPaneChildren.add(audioLabel);
 
         lowerVolumeLabel = new Label("-");
         initializeTrackObject(lowerVolumeLabel, getTrackCoordinates().lowerVolumeLabelX, getTrackCoordinates().lowerVolumeLabelY, LOWER_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
-        anchorPaneChildren.add(lowerVolumeLabel);
 
         volumeSlider = new Slider();
         initializeTrackObject(volumeSlider, getTrackCoordinates().volumeSliderX, getTrackCoordinates().volumeSliderY, VOLUME_SLIDER_WIDTH, SLIDER_HEIGHT);
         volumeSlider.setMax(VOLUME_SLIDER_MAX);
         volumeSlider.setValue(volumeSlider.getMax());
-        anchorPaneChildren.add(volumeSlider);
 
         raiseVolumeLabel = new Label("+");
         initializeTrackObject(raiseVolumeLabel, getTrackCoordinates().raiseVolumeLabelX, getTrackCoordinates().raiseVolumeLabelY, RAISE_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
-        anchorPaneChildren.add(raiseVolumeLabel);
 
         PPRButton = new Button();
         initializeTrackObject(PPRButton, getTrackCoordinates().PPRButtonX, getTrackCoordinates().PPRButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
-        anchorPaneChildren.add(PPRButton);
 
         timeSlider = new Slider();
         initializeTrackObject(timeSlider, getTrackCoordinates().timeSliderX, getTrackCoordinates().timeSliderY, TIME_SLIDER_WIDTH, SLIDER_HEIGHT);
-        anchorPaneChildren.add(timeSlider);
 
         currentTimeLabel = new Label();
         initializeTrackObject(currentTimeLabel, getTrackCoordinates().currentTimeLabelX, getTrackCoordinates().currentTimeLabelY, CURRENT_TIME_LABEL_WIDTH, LABEL_HEIGHT);
-        anchorPaneChildren.add(currentTimeLabel);
 
         totalTimeLabel = new Label();
         initializeTrackObject(totalTimeLabel, getTrackCoordinates().totalTimeLabelX, getTrackCoordinates().totalTimeLabelY, TOTAL_TIME_LABEL_WIDTH, LABEL_HEIGHT);
-        anchorPaneChildren.add(totalTimeLabel);
 
         initializeTrack();
     }
@@ -104,26 +90,6 @@ public class AudioTrack extends Track{
         }
         media = new Media(audioFile.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
-
-        // Load button images.
-//        final int IV_SIZE = 15;
-//        Image imagePlay = new Image(new File("src/images/play_button.png").toURI().toString());
-//        ivPlay = new ImageView(imagePlay);
-//        ivPlay.setFitHeight(IV_SIZE);
-//        ivPlay.setFitWidth(IV_SIZE);
-//
-//        Image imagePause = new Image(new File("src/images/pause_button.jpg").toURI().toString());
-//        ivPause = new ImageView(imagePause);
-//        ivPause.setFitHeight(IV_SIZE);
-//        ivPause.setFitWidth(IV_SIZE);
-//
-//        Image imageRestart = new Image(new File("src/images/restart_button.jpg").toURI().toString());
-//        ivRestart = new ImageView(imageRestart);
-//        ivRestart.setFitHeight(IV_SIZE);
-//        ivRestart.setFitWidth(IV_SIZE);
-
-        // Set initial button images.
-//        PPRButton.setGraphic(ivPlay);
         PPRButton.setText("Play");
 
         PPRButton.setOnAction(new EventHandler<ActionEvent>() {
