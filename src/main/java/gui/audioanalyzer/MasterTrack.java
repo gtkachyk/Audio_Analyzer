@@ -160,6 +160,14 @@ public class MasterTrack extends Track{
         sliderOne.onMouseClickedProperty().bindBidirectional(sliderTwo.onMouseClickedProperty());
     }
 
+    public void bindOnDragDetectedProperty(Slider sliderOne, Slider sliderTwo){
+        sliderOne.onDragDetectedProperty().bindBidirectional(sliderTwo.onDragDetectedProperty());
+    }
+
+    public void bindOnMouseReleasedProperty(Slider sliderOne, Slider sliderTwo){
+        sliderOne.onMouseReleasedProperty().bindBidirectional(sliderTwo.onMouseReleasedProperty());
+    }
+
     public void bindLabelValueProperties(Label labelOne, Label labelTwo){
         labelOne.textProperty().bind(labelTwo.textProperty());
     }
@@ -175,6 +183,8 @@ public class MasterTrack extends Track{
             bindSliderValueProperties(timeSlider, track.timeSlider);
             bindSliderValueProperties(volumeSlider, track.volumeSlider); // Bind volumes.
             bindOnMouseClickedProperty(timeSlider, track.timeSlider);
+            bindOnDragDetectedProperty(timeSlider, track.timeSlider);
+            bindOnMouseReleasedProperty(timeSlider, track.timeSlider);
         }
     }
 
@@ -185,10 +195,17 @@ public class MasterTrack extends Track{
         timeSlider.maxProperty().unbind();
         currentTimeLabel.textProperty().unbind();
         totalTimeLabel.textProperty().unbind();
+
         for(AudioTrack track: MainController.audioTracks){
             Bindings.unbindBidirectional(timeSlider.valueProperty(), track.timeSlider.valueProperty());
             Bindings.unbindBidirectional(track.timeSlider.onMouseClickedProperty(), timeSlider.onMouseClickedProperty());
             Bindings.unbindBidirectional(volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
+            Bindings.unbindBidirectional(track.timeSlider.onDragDetectedProperty(), timeSlider.onDragDetectedProperty());
+            Bindings.unbindBidirectional(track.timeSlider.onMouseReleasedProperty(), timeSlider.onMouseReleasedProperty());
         }
+
+        timeSlider.onMouseClickedProperty().set(null);
+        timeSlider.onMouseReleasedProperty().set(null);
+        timeSlider.onDragDetectedProperty().set(null);
     }
 }

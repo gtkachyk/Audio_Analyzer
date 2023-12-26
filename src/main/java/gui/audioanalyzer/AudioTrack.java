@@ -230,6 +230,7 @@ public class AudioTrack extends Track{
         timeSlider.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+                System.out.println("Here 3");
                 bindCurrentTimeLabel();
                 pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
             }
@@ -238,17 +239,19 @@ public class AudioTrack extends Track{
         timeSlider.setOnMouseReleased(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+                System.out.println("Here 2");
                 // Un-mute audio after scrubbing.
                 mediaPlayer.setMute(false);
                 isMuted = false;
 
-                // Update time label.
+                // Update time label to fix sluggish time bug.
             }
         });
 
         timeSlider.setOnDragDetected(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+                System.out.println("Here 1");
                 // Mute audio if scrubbing.
                 mediaPlayer.setMute(true);
                 isMuted = true;

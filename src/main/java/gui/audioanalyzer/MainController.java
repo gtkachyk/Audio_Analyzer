@@ -76,6 +76,8 @@ public class MainController implements Initializable {
             masterTrack.bindSliderValueProperties(masterTrack.timeSlider, audioTrack.timeSlider);
             masterTrack.bindSliderValueProperties(masterTrack.volumeSlider, audioTrack.volumeSlider);
             masterTrack.bindOnMouseClickedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
+            masterTrack.bindOnDragDetectedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
+            masterTrack.bindOnMouseReleasedProperty(masterTrack.timeSlider, audioTrack.timeSlider);
         }
     }
 
