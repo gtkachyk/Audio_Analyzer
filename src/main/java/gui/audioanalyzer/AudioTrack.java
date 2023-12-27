@@ -15,6 +15,8 @@ import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.io.File;
 import java.util.concurrent.Callable;
@@ -29,7 +31,6 @@ public class AudioTrack extends Track{
     boolean isPlaying = false;
     private boolean isMuted = false;
     double pauseTime;
-
     private MasterTrack masterTrack; // The master track that controls this audio track.
 
     // JavaFX objects.
@@ -37,6 +38,176 @@ public class AudioTrack extends Track{
     Separator upperSeparator;
     @FXML
     Label audioLabel;
+
+    // Listeners.
+    private final EventHandler<ActionEvent> pprButtonOnActionEH = new EventHandler<ActionEvent>() {
+        @Override
+        public void handle(ActionEvent actionEvent) {
+            bindCurrentTimeLabel();
+            Button buttonPlay = (Button) actionEvent.getSource();
+            if(atEndOfMedia){
+                timeSlider.setValue(0.0);
+                atEndOfMedia = false;
+                isPlaying = false;
+                pauseTime = 0.0; // Update pause time.
+            }
+            if(isPlaying){
+//                    buttonPlay.setGraphic(ivPlay);
+                buttonPlay.setText("Play");
+                mediaPlayer.pause();
+                isPlaying = false;
+                pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+            }
+            else{
+                mediaPlayer.seek(Duration.seconds(pauseTime));
+//                    buttonPlay.setGraphic(ivPause);
+                buttonPlay.setText("Pause");
+                mediaPlayer.play();
+                isPlaying = true;
+            }
+        }
+    };
+
+    private final ChangeListener<String> pprButtonTextPropertyCL = new ChangeListener<String>() {
+        @Override
+        public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+            if(!masterTrack.synced){
+                if(masterTrack.PPRButton.getText().equals("Play")){
+                    if(newValue.equals("Pause")){
+                        boolean allTracksPlaying = true;
+                        for(AudioTrack track: masterTrack.audioTracks){
+                            if(!track.PPRButton.getText().equals("Pause")){
+                                allTracksPlaying = false;
+                            }
+                        }
+                        if(allTracksPlaying){
+                            masterTrack.PPRButton.setText("Pause");
+                        }
+                    }
+                }
+                else if(masterTrack.PPRButton.getText().equals("Pause")){
+                    if(newValue.equals("Play")){
+                        boolean allTracksPaused = true;
+                        for(AudioTrack track: masterTrack.audioTracks){
+                            if(!track.PPRButton.getText().equals("Play")){
+                                allTracksPaused = false;
+                            }
+                        }
+                        if(allTracksPaused){
+                            masterTrack.PPRButton.setText("Play");
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    private final InvalidationListener volumeSliderValuePropertyIL = new InvalidationListener() {
+        @Override
+        public void invalidated(Observable observable) {
+            mediaPlayer.setVolume(volumeSlider.getValue());
+            if(mediaPlayer.getVolume() != 0.0){
+                isMuted = false;
+            }
+            else{
+                isMuted = true;
+            }
+        }
+    };
+
+    private final ChangeListener<Duration> mediaPlayerTotalDurationCL = new ChangeListener<Duration>() {
+        @Override
+        public void changed(ObservableValue<? extends Duration> observableValue, Duration oldDuration, Duration newDuration) {
+            bindCurrentTimeLabel();
+            timeSlider.setMax(newDuration.toSeconds());
+            totalTimeLabel.setText(getTime(newDuration));
+
+            // Update the longest track in masterTrack.
+            if(masterTrack.longestAudioTrack == null || mediaPlayer.getTotalDuration().toSeconds() > masterTrack.longestAudioTrack.mediaPlayer.getTotalDuration().toSeconds()){
+                masterTrack.longestAudioTrack = AudioTrack.this;
+
+                // Update master track length even if not synced.
+                masterTrack.bindSliderMaxValueProperties(masterTrack.timeSlider, timeSlider);
+                masterTrack.bindLabelValueProperties(masterTrack.totalTimeLabel, totalTimeLabel);
+                masterTrack.bindLabelValueProperties(masterTrack.currentTimeLabel, currentTimeLabel);
+            }
+        }
+    };
+
+    private final ChangeListener<Boolean> timeSliderValueChangingCL = new ChangeListener<Boolean>() {
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observableValue, Boolean wasChanging, Boolean isChanging) {
+            bindCurrentTimeLabel();
+            if(!isChanging){
+                mediaPlayer.seek(Duration.seconds(timeSlider.getValue()));
+            }
+        }
+    };
+
+    private final ChangeListener<Number> timeSliderValueCL = new ChangeListener<Number>() {
+        @Override
+        public void changed(ObservableValue<? extends Number> observableValue, Number oldValue, Number newValue) {
+            bindCurrentTimeLabel();
+            double currentTime = mediaPlayer.getCurrentTime().toSeconds();
+            if(Math.abs(currentTime - newValue.doubleValue()) > 0.5){
+                mediaPlayer.seek(Duration.seconds(newValue.doubleValue()));
+            }
+            labelMatchEndSong(currentTimeLabel.getText(), totalTimeLabel.getText());
+        }
+    };
+
+    private final ChangeListener<Duration> mediaPlayerCurrentTimeCL =  new ChangeListener<Duration>() {
+        @Override
+        public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTime, Duration newTime) {
+            bindCurrentTimeLabel();
+            if(!timeSlider.isValueChanging()){
+                timeSlider.setValue(newTime.toSeconds());
+            }
+            labelMatchEndSong(currentTimeLabel.getText(), totalTimeLabel.getText());
+        }
+    };
+
+    private final Runnable mediaPlayerOnEndOfMediaR = new Runnable() {
+        @Override
+        public void run() {
+            //                PPRButton.setGraphic(ivRestart);
+            PPRButton.setText("Restart");
+            atEndOfMedia = true;
+            if(!currentTimeLabel.textProperty().equals(totalTimeLabel.textProperty())){
+                currentTimeLabel.textProperty().unbind();
+                currentTimeLabel.setText(getTime(mediaPlayer.getTotalDuration()) + " / ");
+            }
+        }
+    };
+
+    private final EventHandler<MouseEvent> timeSliderOnMouseClickedEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            bindCurrentTimeLabel();
+            pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+        }
+    };
+
+    private final EventHandler<MouseEvent> timeSliderOnMouseReleasedEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            // Un-mute audio after scrubbing.
+            mediaPlayer.setMute(false);
+            isMuted = false;
+            pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+
+            // Update time label to fix sluggish time bug.
+        }
+    };
+
+    private final EventHandler<MouseEvent> timeSliderOnDragDetectedEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            // Mute audio if scrubbing.
+            mediaPlayer.setMute(true);
+            isMuted = true;
+        }
+    };
 
     public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates, MasterTrack masterTrack){
         this.masterTrack = masterTrack;
@@ -91,182 +262,27 @@ public class AudioTrack extends Track{
         media = new Media(audioFile.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
         PPRButton.setText("Play");
-
-        PPRButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                bindCurrentTimeLabel();
-                Button buttonPlay = (Button) actionEvent.getSource();
-                if(atEndOfMedia){
-                    timeSlider.setValue(0.0);
-                    atEndOfMedia = false;
-                    isPlaying = false;
-                    pauseTime = 0.0; // Update pause time.
-                }
-                if(isPlaying){
-//                    buttonPlay.setGraphic(ivPlay);
-                    buttonPlay.setText("Play");
-                    mediaPlayer.pause();
-                    isPlaying = false;
-                    pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-                }
-                else{
-                    mediaPlayer.seek(Duration.seconds(pauseTime));
-//                    buttonPlay.setGraphic(ivPause);
-                    buttonPlay.setText("Pause");
-                    mediaPlayer.play();
-                    isPlaying = true;
-                }
-            }
-        });
-
-        // This is needed to ensure that when the PPR button is pressed, the appropriate change is made to the master track PPR button text.
-        // This does not need to be used when the tracks are synced because bindings produce the desired behaviour in that case.
-        PPRButton.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
-                if(!masterTrack.synced){
-                    if(masterTrack.PPRButton.getText().equals("Play")){
-                        if(newValue.equals("Pause")){
-                            boolean allTracksPlaying = true;
-                            for(AudioTrack track: masterTrack.audioTracks){
-                                if(!track.PPRButton.getText().equals("Pause")){
-                                    allTracksPlaying = false;
-                                }
-                            }
-                            if(allTracksPlaying){
-                                masterTrack.PPRButton.setText("Pause");
-                            }
-                        }
-                    }
-                    else if(masterTrack.PPRButton.getText().equals("Pause")){
-                        if(newValue.equals("Play")){
-                            boolean allTracksPaused = true;
-                            for(AudioTrack track: masterTrack.audioTracks){
-                                if(!track.PPRButton.getText().equals("Play")){
-                                    allTracksPaused = false;
-                                }
-                            }
-                            if(allTracksPaused){
-                                masterTrack.PPRButton.setText("Play");
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        PPRButton.setOnAction(pprButtonOnActionEH);
 
         // Bidirectionally bind volume slider value to volume property of media player.
         mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
         bindCurrentTimeLabel();
 
         // Add listeners.
-        volumeSlider.valueProperty().addListener(new InvalidationListener() {
-            @Override
-            public void invalidated(Observable observable) {
-                mediaPlayer.setVolume(volumeSlider.getValue());
-                if(mediaPlayer.getVolume() != 0.0){
-                    isMuted = false;
-                }
-                else{
-                    isMuted = true;
-                }
-            }
-        });
 
-        mediaPlayer.totalDurationProperty().addListener(new ChangeListener<Duration>() {
-            @Override
-            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldDuration, Duration newDuration) {
-                bindCurrentTimeLabel();
-                timeSlider.setMax(newDuration.toSeconds());
-                totalTimeLabel.setText(getTime(newDuration));
+        // This is needed to ensure that when the PPR button is pressed, the appropriate change is made to the master track PPR button text.
+        // This does not need to be used when the tracks are synced because bindings produce the desired behaviour in that case.
+        PPRButton.textProperty().addListener(pprButtonTextPropertyCL);
 
-                // Update the longest track in masterTrack.
-                if(masterTrack.longestAudioTrack == null || mediaPlayer.getTotalDuration().toSeconds() > masterTrack.longestAudioTrack.mediaPlayer.getTotalDuration().toSeconds()){
-                    masterTrack.longestAudioTrack = AudioTrack.this;
-
-                    // Update master track length even if not synced.
-                    masterTrack.bindSliderMaxValueProperties(masterTrack.timeSlider, timeSlider);
-                    masterTrack.bindLabelValueProperties(masterTrack.totalTimeLabel, totalTimeLabel);
-                    masterTrack.bindLabelValueProperties(masterTrack.currentTimeLabel, currentTimeLabel);
-                }
-            }
-        });
-
-        timeSlider.valueChangingProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observableValue, Boolean wasChanging, Boolean isChanging) {
-                bindCurrentTimeLabel();
-                if(!isChanging){
-                    mediaPlayer.seek(Duration.seconds(timeSlider.getValue()));
-                }
-            }
-        });
-
-        timeSlider.valueProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observableValue, Number oldValue, Number newValue) {
-                bindCurrentTimeLabel();
-                double currentTime = mediaPlayer.getCurrentTime().toSeconds();
-                if(Math.abs(currentTime - newValue.doubleValue()) > 0.5){
-                    mediaPlayer.seek(Duration.seconds(newValue.doubleValue()));
-                }
-                labelMatchEndSong(currentTimeLabel.getText(), totalTimeLabel.getText());
-            }
-        });
-
-        mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
-            @Override
-            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTIme, Duration newTime) {
-                bindCurrentTimeLabel();
-                if(!timeSlider.isValueChanging()){
-                    timeSlider.setValue(newTime.toSeconds());
-                }
-                labelMatchEndSong(currentTimeLabel.getText(), totalTimeLabel.getText());
-            }
-        });
-
-        mediaPlayer.setOnEndOfMedia(new Runnable() {
-            @Override
-            public void run() {
-//                PPRButton.setGraphic(ivRestart);
-                PPRButton.setText("Restart");
-                atEndOfMedia = true;
-                if(!currentTimeLabel.textProperty().equals(totalTimeLabel.textProperty())){
-                    currentTimeLabel.textProperty().unbind();
-                    currentTimeLabel.setText(getTime(mediaPlayer.getTotalDuration()) + " / ");
-                }
-            }
-        });
-
-        timeSlider.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                bindCurrentTimeLabel();
-                pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-            }
-        });
-
-        timeSlider.setOnMouseReleased(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                // Un-mute audio after scrubbing.
-                mediaPlayer.setMute(false);
-                isMuted = false;
-                pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-
-                // Update time label to fix sluggish time bug.
-            }
-        });
-
-        timeSlider.setOnDragDetected(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                // Mute audio if scrubbing.
-                mediaPlayer.setMute(true);
-                isMuted = true;
-            }
-        });
+        volumeSlider.valueProperty().addListener(volumeSliderValuePropertyIL);
+        mediaPlayer.totalDurationProperty().addListener(mediaPlayerTotalDurationCL);
+        timeSlider.valueChangingProperty().addListener(timeSliderValueChangingCL);
+        timeSlider.valueProperty().addListener(timeSliderValueCL);
+        mediaPlayer.currentTimeProperty().addListener(mediaPlayerCurrentTimeCL);
+        mediaPlayer.setOnEndOfMedia(mediaPlayerOnEndOfMediaR);
+        timeSlider.setOnMouseClicked(timeSliderOnMouseClickedEH);
+        timeSlider.setOnMouseReleased(timeSliderOnMouseReleasedEH);
+        timeSlider.setOnDragDetected(timeSliderOnDragDetectedEH);
     }
 
     public void bindCurrentTimeLabel(){
@@ -310,5 +326,36 @@ public class AudioTrack extends Track{
 
     AudioTrackCoordinates getTrackCoordinates(){
         return (AudioTrackCoordinates) trackCoordinates;
+    }
+
+    private void selectFile(){
+        // Pause all tracks.
+        if(masterTrack.PPRButton.getText().equals("Pause")){
+            masterTrack.PPRButton.fire();
+        }
+        if(masterTrack.PPRButton.getText().equals("Restart")){
+            masterTrack.PPRButton.fire();
+            masterTrack.PPRButton.fire();
+        }
+        if(PPRButton.getText().equals("Pause")){
+            PPRButton.fire();
+        }
+        if(PPRButton.getText().equals("Restart")){
+            PPRButton.fire();
+            PPRButton.fire();
+        }
+        // Unsync tracks.
+        if(masterTrack.synced){
+            masterTrack.syncButton.fire();
+        }
+
+        // Open the file browser at the current directory.
+        final FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File("."));
+        fileChooser.setTitle("Select a file for track " + trackNumber + "...");
+        File selectedFile = fileChooser.showOpenDialog(new Stage());
+        if(selectedFile != null){
+            media = new Media(selectedFile.toURI().toString());
+        }
     }
 }
