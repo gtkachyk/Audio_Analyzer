@@ -18,7 +18,6 @@ public class MainController implements Initializable {
     AnchorPane anchorPane;
     private MasterTrack masterTrack; // Private so masterTrack can't access itself through masterTrack.controller.
 
-    // Methods.
     /**
      * Called to initialize a controller after its root element has been completely processed.
      * @param url The location used to resolve relative paths for the root object, or null if the location is not known.

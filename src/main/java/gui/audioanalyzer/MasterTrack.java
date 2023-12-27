@@ -11,10 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
-
 import java.util.ArrayList;
-//import static gui.audioanalyzer.MainController.audioTracks;
-//import static gui.audioanalyzer.MainController.longestAudioTrack;
 
 public class MasterTrack extends Track{
 

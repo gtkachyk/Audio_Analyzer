@@ -253,6 +253,7 @@ public class AudioTrack extends Track{
                 // Un-mute audio after scrubbing.
                 mediaPlayer.setMute(false);
                 isMuted = false;
+                pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
 
                 // Update time label to fix sluggish time bug.
             }
