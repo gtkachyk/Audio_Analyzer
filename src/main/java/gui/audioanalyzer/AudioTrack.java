@@ -253,12 +253,7 @@ public class AudioTrack extends Track{
     void initializeTrack(){
         // Load media.
         audioFile = new File("src/test_audio_files/Arctic Expedition (Instrumental) Mix 5.wav"); // For testing.
-        if(audioFile.getName().length() < 25){
-            audioLabel.setText(audioFile.getName());
-        }
-        else{
-            audioLabel.setText(audioFile.getName().substring(0, 24) + "...");
-        }
+        setAudioLabelText();
         media = new Media(audioFile.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
         PPRButton.setText("Play");
@@ -269,7 +264,10 @@ public class AudioTrack extends Track{
         bindCurrentTimeLabel();
 
         // Add listeners.
+        addListeners();
+    }
 
+    private void addListeners(){
         // This is needed to ensure that when the PPR button is pressed, the appropriate change is made to the master track PPR button text.
         // This does not need to be used when the tracks are synced because bindings produce the desired behaviour in that case.
         PPRButton.textProperty().addListener(pprButtonTextPropertyCL);
@@ -283,6 +281,33 @@ public class AudioTrack extends Track{
         timeSlider.setOnMouseClicked(timeSliderOnMouseClickedEH);
         timeSlider.setOnMouseReleased(timeSliderOnMouseReleasedEH);
         timeSlider.setOnDragDetected(timeSliderOnDragDetectedEH);
+    }
+
+    private void removeListeners(){
+        PPRButton.textProperty().removeListener(pprButtonTextPropertyCL);
+        volumeSlider.valueProperty().removeListener(volumeSliderValuePropertyIL);
+        mediaPlayer.totalDurationProperty().removeListener(mediaPlayerTotalDurationCL);
+        timeSlider.valueChangingProperty().removeListener(timeSliderValueChangingCL);
+        timeSlider.valueProperty().removeListener(timeSliderValueCL);
+        mediaPlayer.currentTimeProperty().removeListener(mediaPlayerCurrentTimeCL);
+        mediaPlayer.onEndOfMediaProperty().set(null);
+        timeSlider.onMouseClickedProperty().set(null);
+        timeSlider.onMouseReleasedProperty().set(null);
+        timeSlider.onDragDetectedProperty().set(null);
+    }
+
+    private void setAudioLabelText(){
+        if(audioFile == null){
+            audioLabel.setText("Add file...");
+        }
+        else{
+            if(audioFile.getName().length() < 25){
+                audioLabel.setText(audioFile.getName());
+            }
+            else{
+                audioLabel.setText(audioFile.getName().substring(0, 24) + "...");
+            }
+        }
     }
 
     public void bindCurrentTimeLabel(){
