@@ -209,6 +209,13 @@ public class AudioTrack extends Track{
         }
     };
 
+    private final EventHandler<MouseEvent> audioLabelOnMouseClickedEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            selectFile();
+        }
+    };
+
     public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates, MasterTrack masterTrack){
         this.masterTrack = masterTrack;
         this.trackNumber = trackNumber;
@@ -251,13 +258,11 @@ public class AudioTrack extends Track{
 
     @Override
     void initializeTrack(){
-        // Load media.
-        audioFile = new File("src/test_audio_files/Arctic Expedition (Instrumental) Mix 5.wav"); // For testing.
+        audioLabel.setOnMouseClicked(audioLabelOnMouseClickedEH);
         setAudioLabelText();
-        media = new Media(audioFile.toURI().toString());
-        mediaPlayer = new MediaPlayer(media);
         PPRButton.setText("Play");
-        PPRButton.setOnAction(pprButtonOnActionEH);
+
+        if(audioFile == null) return;
 
         // Bidirectionally bind volume slider value to volume property of media player.
         mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
@@ -268,6 +273,8 @@ public class AudioTrack extends Track{
     }
 
     private void addListeners(){
+        PPRButton.setOnAction(pprButtonOnActionEH);
+
         // This is needed to ensure that when the PPR button is pressed, the appropriate change is made to the master track PPR button text.
         // This does not need to be used when the tracks are synced because bindings produce the desired behaviour in that case.
         PPRButton.textProperty().addListener(pprButtonTextPropertyCL);
@@ -284,13 +291,15 @@ public class AudioTrack extends Track{
     }
 
     private void removeListeners(){
+        if(mediaPlayer != null){
+            mediaPlayer.totalDurationProperty().removeListener(mediaPlayerTotalDurationCL);
+            mediaPlayer.currentTimeProperty().removeListener(mediaPlayerCurrentTimeCL);
+            mediaPlayer.onEndOfMediaProperty().set(null);
+        }
         PPRButton.textProperty().removeListener(pprButtonTextPropertyCL);
         volumeSlider.valueProperty().removeListener(volumeSliderValuePropertyIL);
-        mediaPlayer.totalDurationProperty().removeListener(mediaPlayerTotalDurationCL);
         timeSlider.valueChangingProperty().removeListener(timeSliderValueChangingCL);
         timeSlider.valueProperty().removeListener(timeSliderValueCL);
-        mediaPlayer.currentTimeProperty().removeListener(mediaPlayerCurrentTimeCL);
-        mediaPlayer.onEndOfMediaProperty().set(null);
         timeSlider.onMouseClickedProperty().set(null);
         timeSlider.onMouseReleasedProperty().set(null);
         timeSlider.onDragDetectedProperty().set(null);
@@ -334,18 +343,15 @@ public class AudioTrack extends Track{
             if(labelTime.charAt(i) != labelTotalTime.charAt(i)){
                 atEndOfMedia = false;
                 if(isPlaying){
-//                    PPRButton.setGraphic(ivPause);
                     PPRButton.setText("Pause");
                 }
                 else{
-//                    PPRButton.setGraphic(ivPlay);
                     PPRButton.setText("Play");
                 }
                 return;
             }
         }
         atEndOfMedia = true;
-//        PPRButton.setGraphic(ivRestart);
         PPRButton.setText("Restart");
     }
 
@@ -353,22 +359,16 @@ public class AudioTrack extends Track{
         return (AudioTrackCoordinates) trackCoordinates;
     }
 
+    private void setTrackAudio(File audioFile){
+        this.audioFile = audioFile;
+        media = new Media(this.audioFile.toURI().toString());
+        mediaPlayer = new MediaPlayer(media);
+    }
+
     private void selectFile(){
         // Pause all tracks.
-        if(masterTrack.PPRButton.getText().equals("Pause")){
-            masterTrack.PPRButton.fire();
-        }
-        if(masterTrack.PPRButton.getText().equals("Restart")){
-            masterTrack.PPRButton.fire();
-            masterTrack.PPRButton.fire();
-        }
-        if(PPRButton.getText().equals("Pause")){
-            PPRButton.fire();
-        }
-        if(PPRButton.getText().equals("Restart")){
-            PPRButton.fire();
-            PPRButton.fire();
-        }
+        masterTrack.pauseAllTracks();
+
         // Unsync tracks.
         if(masterTrack.synced){
             masterTrack.syncButton.fire();
@@ -379,8 +379,12 @@ public class AudioTrack extends Track{
         fileChooser.setInitialDirectory(new File("."));
         fileChooser.setTitle("Select a file for track " + trackNumber + "...");
         File selectedFile = fileChooser.showOpenDialog(new Stage());
+
+        // Initialize the track with the new file.
         if(selectedFile != null){
-            media = new Media(selectedFile.toURI().toString());
+            removeListeners();
+            setTrackAudio(selectedFile);
+            initializeTrack();
         }
     }
 }

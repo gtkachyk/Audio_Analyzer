@@ -159,6 +159,9 @@ public class MasterTrack extends Track{
                         }
                     }
                 }
+                else if(PPRButton.getText().equals("Restart")){
+                    // TODO: Fix bug: tracks do not restart when PPRButton reads 'Restart'.
+                }
             }
         });
     }
@@ -280,5 +283,17 @@ public class MasterTrack extends Track{
 
         // Add a listener to the time slider to update the current time label when unsynced.
         timeSlider.valueProperty().addListener(timeSliderChangeListener);
+    }
+
+    void pauseAllTracks(){
+        for(AudioTrack track: audioTracks){
+            if(track.PPRButton.getText().equals("Pause")){
+                track.PPRButton.fire();
+            }
+            if(track.PPRButton.getText().equals("Restart")){
+                track.PPRButton.fire();
+                track.PPRButton.fire();
+            }
+        }
     }
 }
