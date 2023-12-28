@@ -43,28 +43,7 @@ public class AudioTrack extends Track{
     private final EventHandler<ActionEvent> pprButtonOnActionEH = new EventHandler<ActionEvent>() {
         @Override
         public void handle(ActionEvent actionEvent) {
-            bindCurrentTimeLabel();
-            Button buttonPlay = (Button) actionEvent.getSource();
-            if(atEndOfMedia){
-                timeSlider.setValue(0.0);
-                atEndOfMedia = false;
-                isPlaying = false;
-                pauseTime = 0.0; // Update pause time.
-            }
-            if(isPlaying){
-//                    buttonPlay.setGraphic(ivPlay);
-                buttonPlay.setText("Play");
-                mediaPlayer.pause();
-                isPlaying = false;
-                pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-            }
-            else{
-                mediaPlayer.seek(Duration.seconds(pauseTime));
-//                    buttonPlay.setGraphic(ivPause);
-                buttonPlay.setText("Pause");
-                mediaPlayer.play();
-                isPlaying = true;
-            }
+            pprOnAction();
         }
     };
 
@@ -129,7 +108,9 @@ public class AudioTrack extends Track{
                 // Update master track length even if not synced.
                 masterTrack.bindSliderMaxValueProperties(masterTrack.timeSlider, timeSlider);
                 masterTrack.bindLabelValueProperties(masterTrack.totalTimeLabel, totalTimeLabel);
-                masterTrack.bindLabelValueProperties(masterTrack.currentTimeLabel, currentTimeLabel);
+                if(masterTrack.synced){
+                    masterTrack.bindLabelValueProperties(masterTrack.currentTimeLabel, currentTimeLabel);
+                }
             }
         }
     };
@@ -216,6 +197,13 @@ public class AudioTrack extends Track{
         }
     };
 
+    private final EventHandler<MouseEvent> trackLabelOnMouseClickedEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            focusTrack();
+        }
+    };
+
     public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates, MasterTrack masterTrack){
         this.masterTrack = masterTrack;
         this.trackNumber = trackNumber;
@@ -288,6 +276,7 @@ public class AudioTrack extends Track{
         timeSlider.setOnMouseClicked(timeSliderOnMouseClickedEH);
         timeSlider.setOnMouseReleased(timeSliderOnMouseReleasedEH);
         timeSlider.setOnDragDetected(timeSliderOnDragDetectedEH);
+        trackLabel.setOnMouseClicked(trackLabelOnMouseClickedEH);
     }
 
     private void removeListeners(){
@@ -367,10 +356,12 @@ public class AudioTrack extends Track{
 
     private void selectFile(){
         // Pause all tracks.
-        masterTrack.pauseAllTracks();
+        if(masterTrack.PPRButton.getText().equals("Pause")) masterTrack.PPRButton.fire();
 
         // Unsync tracks.
+        boolean wasSynced = false;
         if(masterTrack.synced){
+            wasSynced = true;
             masterTrack.syncButton.fire();
         }
 
@@ -385,6 +376,62 @@ public class AudioTrack extends Track{
             removeListeners();
             setTrackAudio(selectedFile);
             initializeTrack();
+            if(wasSynced){
+                masterTrack.bindSliderValueProperties(timeSlider, masterTrack.timeSlider);
+                masterTrack.bindSliderValueProperties(volumeSlider, masterTrack.volumeSlider);
+                masterTrack.bindSliderOnMouseClickedProperty(masterTrack.timeSlider, timeSlider);
+                masterTrack.bindSliderOnDragDetectedProperty(masterTrack.timeSlider, timeSlider);
+                masterTrack.bindSliderOnMouseReleasedProperty(masterTrack.timeSlider, timeSlider);
+                masterTrack.bindButtonTextProperties(masterTrack.PPRButton, PPRButton);
+
+                PPRButton.setDisable(true);
+                timeSlider.setDisable(true);
+                volumeSlider.setDisable(true);
+            }
+        }
+    }
+
+    /**
+     * Focuses this audio track.
+     */
+    private void focusTrack(){
+        volumeSlider.setValue(1.0);
+        if(masterTrack.synced){
+            for(AudioTrack track: masterTrack.audioTracks){
+                if(track.trackNumber != trackNumber){
+                    Bindings.unbindBidirectional(masterTrack.volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
+                    track.volumeSlider.setValue(0.0);
+                }
+            }
+        }
+        else{
+            for(AudioTrack track: masterTrack.audioTracks){
+                if(track.trackNumber != trackNumber){
+                    track.volumeSlider.setValue(0.0);
+                }
+            }
+        }
+    }
+
+    void pprOnAction(){
+        bindCurrentTimeLabel();
+        if(atEndOfMedia){
+            timeSlider.setValue(0.0);
+            atEndOfMedia = false;
+            isPlaying = false;
+            pauseTime = 0.0; // Update pause time.
+        }
+        if(isPlaying){
+            PPRButton.setText("Play");
+            mediaPlayer.pause();
+            isPlaying = false;
+            pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+        }
+        else{
+            mediaPlayer.seek(Duration.seconds(pauseTime));
+            PPRButton.setText("Pause");
+            mediaPlayer.play();
+            isPlaying = true;
         }
     }
 }

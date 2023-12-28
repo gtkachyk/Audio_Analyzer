@@ -32,10 +32,26 @@ public class MasterTrack extends Track{
 
     // Other data.
     boolean synced = true;
+    boolean focused = false;
     private final ChangeListener<Number> timeSliderChangeListener = new ChangeListener<Number>() {
         @Override
         public void changed(ObservableValue observableValue, Number oldValue, Number newValue) {
             currentTimeLabel.setText(getTime(new Duration(timeSlider.getValue() * MILLISECONDS_PER_SECOND)) + " / ");
+        }
+    };
+
+    private final EventHandler<MouseEvent> switchButtonOnMouseClickedEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            String currentFocusTrack = getFocusTrack();
+            if(currentFocusTrack.equals("None")){
+                for(AudioTrack track: audioTracks){
+                    if(track.trackNumber == 1){
+                        track.volumeSlider.setValue(1.0);
+                        Bindings.unbindBidirectional(volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
+                    }
+                }
+            }
         }
     };
 
@@ -51,7 +67,7 @@ public class MasterTrack extends Track{
         trackLabel = new Label("Master");
         initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
 
-        focusTrackLabel = new Label("Focus Track: " + 1);
+        focusTrackLabel = new Label("Focus Track: " + getFocusTrack());
         initializeTrackObject(focusTrackLabel, getTrackCoordinates().focusTrackLabelX, getTrackCoordinates().focusTrackLabelY, AUDIO_LABEL_WIDTH, LABEL_HEIGHT);
 
         lowerVolumeLabel = new Label("-");
@@ -77,7 +93,7 @@ public class MasterTrack extends Track{
         totalTimeLabel = new Label("00:00");
         initializeTrackObject(totalTimeLabel, getTrackCoordinates().totalTimeLabelX, getTrackCoordinates().totalTimeLabelY, TOTAL_TIME_LABEL_WIDTH, LABEL_HEIGHT);
 
-        switchButton = new Button("Switch");
+        switchButton = new Button("Focus");
         initializeTrackObject(switchButton, getTrackCoordinates().switchButtonX, getTrackCoordinates().switchButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
 
         syncButton = new Button("Unlock");
@@ -119,14 +135,14 @@ public class MasterTrack extends Track{
                 audioTracks.add(audioTrack);
 
                 // Sync master track with newly added audio track if needed.
-                if(synced){
-                    bindSliderValueProperties(audioTrack.timeSlider, timeSlider);
-                    bindSliderValueProperties(audioTrack.volumeSlider, volumeSlider);
-                    bindSliderOnMouseClickedProperty(timeSlider, audioTrack.timeSlider);
-                    bindSliderOnDragDetectedProperty(timeSlider, audioTrack.timeSlider);
-                    bindSliderOnMouseReleasedProperty(timeSlider, audioTrack.timeSlider);
-                    bindButtonTextProperties(PPRButton, audioTrack.PPRButton);
-                }
+//                if(synced){
+//                    bindSliderValueProperties(audioTrack.timeSlider, timeSlider);
+//                    bindSliderValueProperties(audioTrack.volumeSlider, volumeSlider);
+//                    bindSliderOnMouseClickedProperty(timeSlider, audioTrack.timeSlider);
+//                    bindSliderOnDragDetectedProperty(timeSlider, audioTrack.timeSlider);
+//                    bindSliderOnMouseReleasedProperty(timeSlider, audioTrack.timeSlider);
+//                    bindButtonTextProperties(PPRButton, audioTrack.PPRButton);
+//                }
             }
         });
 
@@ -143,9 +159,11 @@ public class MasterTrack extends Track{
                     for(AudioTrack track: audioTracks){
                         // Pause all playing tracks.
                         if(track.isPlaying){
-                            track.PPRButton.fire();
+                            track.pprOnAction();
+//                            track.PPRButton.fire();
                             if(track.atEndOfMedia){
-                                track.PPRButton.fire();
+                                track.pprOnAction();
+//                                track.PPRButton.fire();
                             }
                         }
                     }
@@ -155,7 +173,8 @@ public class MasterTrack extends Track{
                     for(AudioTrack track: audioTracks){
                         // Play all paused tracks.
                         if(!track.isPlaying){
-                            track.PPRButton.fire();
+                            track.pprOnAction();
+//                            track.PPRButton.fire();
                         }
                     }
                 }
@@ -225,7 +244,7 @@ public class MasterTrack extends Track{
     }
 
     /**
-     * Binds the textProperty of buttonOne to buttonTwo. Binding is unidirectional.
+     * Binds the textProperty of buttonOne to buttonTwo. Binding is bidirectional.
      * @param buttonOne The button whose textProperty will be bound to buttonTwo.
      * @param buttonTwo The button whose textProperty will not be bound.
      */
@@ -233,10 +252,14 @@ public class MasterTrack extends Track{
         buttonTwo.textProperty().bindBidirectional(buttonOne.textProperty());
     }
 
+    public void bindButtonOnActionProperties(Button buttonOne, Button buttonTwo){
+        buttonOne.onActionProperty().bindBidirectional(buttonTwo.onActionProperty());
+    }
+
     /**
      * Binds properties of this master track and all AudioTracks needed to synchronize them.
      */
-    private void sync(){
+    void sync(){
         // Remove the listener from the time slider value property.
         timeSlider.valueProperty().removeListener(timeSliderChangeListener);
 
@@ -254,6 +277,10 @@ public class MasterTrack extends Track{
             bindSliderOnDragDetectedProperty(timeSlider, track.timeSlider);
             bindSliderOnMouseReleasedProperty(timeSlider, track.timeSlider);
             bindButtonTextProperties(PPRButton, track.PPRButton);
+
+            track.PPRButton.setDisable(true);
+            track.timeSlider.setDisable(true);
+            track.volumeSlider.setDisable(true);
         }
     }
 
@@ -274,6 +301,10 @@ public class MasterTrack extends Track{
             Bindings.unbindBidirectional(track.timeSlider.onDragDetectedProperty(), timeSlider.onDragDetectedProperty());
             Bindings.unbindBidirectional(track.timeSlider.onMouseReleasedProperty(), timeSlider.onMouseReleasedProperty());
             Bindings.unbindBidirectional(PPRButton.textProperty(), track.PPRButton.textProperty());
+
+            track.PPRButton.setDisable(false);
+            track.timeSlider.setDisable(false);
+            track.volumeSlider.setDisable(false);
         }
 
         // These properties linger if not set to null. Unbinding them alone does not remove them.
@@ -294,6 +325,27 @@ public class MasterTrack extends Track{
                 track.PPRButton.fire();
                 track.PPRButton.fire();
             }
+        }
+    }
+
+    /**
+     * Determines if any audio track is focused.
+     * @return The focused track if one exists, 0 otherwise.
+     */
+    private String getFocusTrack(){
+        int notMutedTracks = 0;
+        int lastNotMutedTrack = 0;
+        for(AudioTrack track: audioTracks){
+            if(track.volumeSlider.getValue() == 0.0){
+                notMutedTracks++;
+                lastNotMutedTrack = track.trackNumber;
+            }
+        }
+        if(notMutedTracks == 1){
+            return String.valueOf(lastNotMutedTrack);
+        }
+        else{
+            return "None";
         }
     }
 }

@@ -16,7 +16,7 @@ public abstract class Track {
     static final double SEPARATOR_WIDTH = 444.0;
     static final double SEPARATOR_HEIGHT = 14.4;
     static final double TRACK_LABEL_WIDTH = 38.4;
-    static final double AUDIO_LABEL_WIDTH = 76.0;
+    static final double AUDIO_LABEL_WIDTH = 100.0; // Original value: 76.0.
     static final double LOWER_VOLUME_LABEL_WIDTH = 4.8;
     static final double VOLUME_SLIDER_WIDTH = 100.0;
     static final double RAISE_VOLUME_LABEL_WIDTH = 8.8;
