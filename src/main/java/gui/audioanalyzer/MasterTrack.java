@@ -134,15 +134,10 @@ public class MasterTrack extends Track{
                 controller.showAudioTrack(audioTrack);
                 audioTracks.add(audioTrack);
 
-                // Sync master track with newly added audio track if needed.
-//                if(synced){
-//                    bindSliderValueProperties(audioTrack.timeSlider, timeSlider);
-//                    bindSliderValueProperties(audioTrack.volumeSlider, volumeSlider);
-//                    bindSliderOnMouseClickedProperty(timeSlider, audioTrack.timeSlider);
-//                    bindSliderOnDragDetectedProperty(timeSlider, audioTrack.timeSlider);
-//                    bindSliderOnMouseReleasedProperty(timeSlider, audioTrack.timeSlider);
-//                    bindButtonTextProperties(PPRButton, audioTrack.PPRButton);
-//                }
+                // Disable buttons and slider of new track because it has no file to play.
+                audioTrack.PPRButton.setDisable(true);
+                audioTrack.timeSlider.setDisable(true);
+                audioTrack.volumeSlider.setDisable(true);
             }
         });
 
@@ -250,10 +245,6 @@ public class MasterTrack extends Track{
      */
     public void bindButtonTextProperties(Button buttonOne, Button buttonTwo){
         buttonTwo.textProperty().bindBidirectional(buttonOne.textProperty());
-    }
-
-    public void bindButtonOnActionProperties(Button buttonOne, Button buttonTwo){
-        buttonOne.onActionProperty().bindBidirectional(buttonTwo.onActionProperty());
     }
 
     /**
