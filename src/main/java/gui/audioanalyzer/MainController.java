@@ -4,10 +4,10 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import java.io.File;
+
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -28,21 +28,6 @@ public class MainController implements Initializable {
         // Add one master track and audio track at the start.
         addMasterTrack();
         masterTrack.addTrackButton.fire();
-    }
-
-    /**
-     *
-     */
-    @FXML
-    private void selectFile(){
-        // Open the file browser at the current directory.
-        final FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialDirectory(new File("src/test_audio_files"));
-        fileChooser.setTitle("Select a file for lane " + 1 + "...");
-        File selectedFile = fileChooser.showOpenDialog(new Stage());
-        if(selectedFile != null){
-            // Do something.
-        }
     }
 
     /**
@@ -85,8 +70,23 @@ public class MainController implements Initializable {
         anchorPaneChildren.add(track.audioLabel);
     }
 
+    /**
+     * Adds a new master track to the gui.
+     */
     private void addMasterTrack(){
         masterTrack = new MasterTrack(new MasterTrackCoordinates(), this);
         showMasterTrack(masterTrack);
+    }
+
+    void resizeStageForNewAudioTrack(){
+        // Resize stage.
+        Scene scene = anchorPane.getScene();
+        if(scene != null){
+            Stage stage = (Stage) scene.getWindow();
+            if(stage != null){
+                double stageHeight = stage.getHeight();
+                stage.setHeight(stageHeight + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT);
+            }
+        }
     }
 }

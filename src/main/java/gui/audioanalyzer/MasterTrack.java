@@ -32,7 +32,6 @@ public class MasterTrack extends Track{
 
     // Other data.
     boolean synced = true;
-    boolean focused = false;
     private final ChangeListener<Number> timeSliderChangeListener = new ChangeListener<Number>() {
         @Override
         public void changed(ObservableValue observableValue, Number oldValue, Number newValue) {
@@ -147,6 +146,8 @@ public class MasterTrack extends Track{
                     audioTrack.timeSlider.setDisable(true);
                     audioTrack.volumeSlider.setDisable(true);
                 }
+
+                controller.resizeStageForNewAudioTrack();
             }
         });
 

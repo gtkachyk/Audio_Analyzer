@@ -140,7 +140,7 @@ public class AudioTrack extends Track{
         }
     };
 
-    private final ChangeListener<Duration> mediaPlayerCurrentTimeCL =  new ChangeListener<Duration>() {
+    private final ChangeListener<Duration> mediaPlayerCurrentTimeCL = new ChangeListener<Duration>() {
         @Override
         public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTime, Duration newTime) {
             bindCurrentTimeLabel();
@@ -154,7 +154,6 @@ public class AudioTrack extends Track{
     private final Runnable mediaPlayerOnEndOfMediaR = new Runnable() {
         @Override
         public void run() {
-            //                PPRButton.setGraphic(ivRestart);
             PPRButton.setText("Restart");
             atEndOfMedia = true;
             if(!currentTimeLabel.textProperty().equals(totalTimeLabel.textProperty())){
