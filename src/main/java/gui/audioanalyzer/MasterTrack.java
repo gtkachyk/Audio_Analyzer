@@ -123,6 +123,13 @@ public class MasterTrack extends Track{
                     synced = true;
                     sync();
                 }
+
+                // Refocus focused track if one exists.
+                for(AudioTrack track: audioTracks){
+                    if(track.focused){
+                        track.focusTrack();
+                    }
+                }
             }
         });
 
@@ -135,9 +142,11 @@ public class MasterTrack extends Track{
                 audioTracks.add(audioTrack);
 
                 // Disable buttons and slider of new track because it has no file to play.
-                audioTrack.PPRButton.setDisable(true);
-                audioTrack.timeSlider.setDisable(true);
-                audioTrack.volumeSlider.setDisable(true);
+                if(synced){
+                    audioTrack.PPRButton.setDisable(true);
+                    audioTrack.timeSlider.setDisable(true);
+                    audioTrack.volumeSlider.setDisable(true);
+                }
             }
         });
 

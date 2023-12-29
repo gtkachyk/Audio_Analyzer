@@ -203,11 +203,13 @@ public class AudioTrack extends Track{
     private final EventHandler<MouseEvent> trackLabelOnMouseClickedEH = new EventHandler<MouseEvent>() {
         @Override
         public void handle(MouseEvent event) {
-            if(focused){
-                undoFocus();
-            }
-            else{
-                focusTrack();
+            if(audioFile != null){
+                if(focused){
+                    undoFocus();
+                }
+                else{
+                    focusTrack();
+                }
             }
         }
     };
@@ -402,47 +404,41 @@ public class AudioTrack extends Track{
     /**
      * Focuses this audio track.
      */
-    private void focusTrack(){
-        volumeSlider.setValue(1.0);
-        focused = true;
-        trackLabel.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-        if(masterTrack.synced){
-            for(AudioTrack track: masterTrack.audioTracks){
-                if(track.trackNumber != trackNumber){
-                    // Unbind the volume slider of all non-focused tracks.
+    void focusTrack(){
+        setTrackInFocus(AudioTrack.this);
+        for(AudioTrack track: masterTrack.audioTracks){
+            if(track.trackNumber != trackNumber){
+                // Unbind the volume slider of all non-focused tracks.
+                if(masterTrack.synced){
                     Bindings.unbindBidirectional(masterTrack.volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
-                    track.volumeSlider.setValue(0.0);
-                    track.focused = false;
                 }
+                setTrackOutOfFocus(track);
             }
         }
-        else{
-            for(AudioTrack track: masterTrack.audioTracks){
-                if(track.trackNumber != trackNumber){
-                    track.volumeSlider.setValue(0.0);
-                    track.focused = false;
-                }
-            }
-        }
+    }
+
+    private void setTrackInFocus(AudioTrack track){
+        track.volumeSlider.setValue(1.0);
+        track.focused = true;
+        track.trackLabel.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+    }
+
+    private void setTrackOutOfFocus(AudioTrack track){
+        track.volumeSlider.setValue(0.0);
+        track.focused = false;
+        track.trackLabel.borderProperty().set(null);
     }
 
     private void undoFocus(){
         focused = false;
         trackLabel.borderProperty().set(null);
-        if(masterTrack.synced){
-            for(AudioTrack track: masterTrack.audioTracks){
-                if(track.trackNumber != trackNumber){
-                    // Bind the volume slider of all non-focused tracks.
+        for(AudioTrack track: masterTrack.audioTracks){
+            if(track.trackNumber != trackNumber){
+                // Bind the volume slider of all non-focused tracks.
+                if(masterTrack.synced){
                     masterTrack.bindSliderValueProperties(track.volumeSlider, masterTrack.volumeSlider);
-                    track.volumeSlider.setValue(1.0);
                 }
-            }
-        }
-        else{
-            for(AudioTrack track: masterTrack.audioTracks){
-                if(track.trackNumber != trackNumber){
-                    track.volumeSlider.setValue(1.0);
-                }
+                track.volumeSlider.setValue(1.0);
             }
         }
     }
