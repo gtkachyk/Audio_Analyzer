@@ -349,4 +349,23 @@ public class MasterTrack extends Track{
             return "None";
         }
     }
+
+    void removeAudioTrack(AudioTrack track){
+        int removedTrackNumber = track.trackNumber;
+        controller.removeAudioTrack(track);
+        audioTracks.remove(track);
+        numberOfAudioTracks--;
+
+        // Shift up tracks and update track numbers.
+        if(numberOfAudioTracks > 0){
+            for(AudioTrack audioTrack: audioTracks){
+                if(audioTrack.trackNumber > removedTrackNumber){
+                    audioTrack.shiftTrackUp();
+                    audioTrack.trackNumber--;
+                    audioTrack.trackLabel.setText("Track " + audioTrack.trackNumber);
+                }
+            }
+        }
+        controller.resizeStageForRemovedAudioTrack();
+    }
 }

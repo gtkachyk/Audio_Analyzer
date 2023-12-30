@@ -72,6 +72,34 @@ public class MainController implements Initializable {
     }
 
     /**
+     * Removes JavaFX elements of a Track from anchorPane.
+     * @param track The Track to remove.
+     */
+    void removeTrack(Track track){
+        ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
+        anchorPaneChildren.remove(track.trackLabel);
+        anchorPaneChildren.remove(track.lowerVolumeLabel);
+        anchorPaneChildren.remove(track.volumeSlider);
+        anchorPaneChildren.remove(track.raiseVolumeLabel);
+        anchorPaneChildren.remove(track.PPRButton);
+        anchorPaneChildren.remove(track.timeSlider);
+        anchorPaneChildren.remove(track.currentTimeLabel);
+        anchorPaneChildren.remove(track.totalTimeLabel);
+    }
+
+    /**
+     * Removes JavaFX elements unique to AudioTrack from anchorPane.
+     * @param track The AudioTrack to remove.
+     */
+    void removeAudioTrack(AudioTrack track){
+        removeTrack(track);
+        ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
+        anchorPaneChildren.remove(track.upperSeparator);
+        anchorPaneChildren.remove(track.audioLabel);
+        anchorPaneChildren.remove(track.removeTrackButton);
+    }
+
+    /**
      * Adds a new master track to the gui.
      */
     private void addMasterTrack(){
@@ -87,6 +115,18 @@ public class MainController implements Initializable {
             if(stage != null){
                 double stageHeight = stage.getHeight();
                 stage.setHeight(stageHeight + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT);
+            }
+        }
+    }
+
+    void resizeStageForRemovedAudioTrack(){
+        // Resize stage.
+        Scene scene = anchorPane.getScene();
+        if(scene != null){
+            Stage stage = (Stage) scene.getWindow();
+            if(stage != null){
+                double stageHeight = stage.getHeight();
+                stage.setHeight(stageHeight - AudioTrackCoordinates.AUDIO_TRACK_HEIGHT);
             }
         }
     }

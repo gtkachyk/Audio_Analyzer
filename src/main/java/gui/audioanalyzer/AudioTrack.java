@@ -18,13 +18,14 @@ import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
 public class AudioTrack extends Track{
@@ -222,6 +223,14 @@ public class AudioTrack extends Track{
         }
     };
 
+    private final EventHandler<MouseEvent> removeTrackButtonOnClickEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent mouseEvent) {
+            // TODO: Renumber audio tracks after a track is removed.
+            masterTrack.removeAudioTrack(AudioTrack.this);
+        }
+    };
+
     public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates, MasterTrack masterTrack){
         this.masterTrack = masterTrack;
         this.trackNumber = trackNumber;
@@ -275,6 +284,7 @@ public class AudioTrack extends Track{
     @Override
     void initializeTrack(){
         audioLabel.setOnMouseClicked(audioLabelOnMouseClickedEH);
+        removeTrackButton.setOnMouseClicked(removeTrackButtonOnClickEH);
         setAudioLabelText();
         PPRButton.setText("Play");
 
@@ -480,6 +490,34 @@ public class AudioTrack extends Track{
             PPRButton.setText("Pause");
             mediaPlayer.play();
             isPlaying = true;
+        }
+    }
+
+    /**
+     * Moves the coordinates of all GUI objects of this track up by one track size.
+     */
+    void shiftTrackUp(){
+        shiftTrackObjectUp(upperSeparator, upperSeparator.getLayoutY());
+        shiftTrackObjectUp(trackLabel, trackLabel.getLayoutY());
+        shiftTrackObjectUp(audioLabel, audioLabel.getLayoutY());
+        shiftTrackObjectUp(lowerVolumeLabel, lowerVolumeLabel.getLayoutY());
+        shiftTrackObjectUp(volumeSlider, volumeSlider.getLayoutY());
+        shiftTrackObjectUp(raiseVolumeLabel, raiseVolumeLabel.getLayoutY());
+        shiftTrackObjectUp(PPRButton, PPRButton.getLayoutY());
+        shiftTrackObjectUp(timeSlider, timeSlider.getLayoutY());
+        shiftTrackObjectUp(currentTimeLabel, currentTimeLabel.getLayoutY());
+        shiftTrackObjectUp(totalTimeLabel, totalTimeLabel.getLayoutY());
+        shiftTrackObjectUp(removeTrackButton, removeTrackButton.getLayoutY());
+    }
+
+    void shiftTrackObjectUp(Object trackObject, double objectLayoutY){
+        Class<?> classObject = trackObject.getClass();
+        try{
+            Method setLayoutY = classObject.getMethod("setLayoutY", double.class);
+            setLayoutY.invoke(trackObject, objectLayoutY - AudioTrackCoordinates.AUDIO_TRACK_HEIGHT);
+        }
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e){
+            e.printStackTrace();
         }
     }
 }
