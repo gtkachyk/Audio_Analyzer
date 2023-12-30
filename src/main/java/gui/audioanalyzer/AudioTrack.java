@@ -45,12 +45,6 @@ public class AudioTrack extends Track{
     private MasterTrack masterTrack; // The master track that controls this audio track.
 
     // JavaFX objects.
-//    @FXML
-//    Separator upperSeparator;
-//
-//    @FXML
-//    Separator lowerSeparator;
-
     @FXML
     Label audioLabel;
     @FXML
@@ -240,37 +234,43 @@ public class AudioTrack extends Track{
         this.trackNumber = trackNumber;
         trackCoordinates = coordinates;
 
-//        upperSeparator = new Separator();
-//        initializeTrackObject(upperSeparator, 0.0, getTrackCoordinates().upperSeparatorY, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
-
         trackLabel = new Label("Track " + this.trackNumber);
         initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
+        trackLabel.focusTraversableProperty().set(false);
 
         audioLabel = new Label("song title " + this.trackNumber);
         initializeTrackObject(audioLabel, getTrackCoordinates().audioLabelX, getTrackCoordinates().audioLabelY, AUDIO_LABEL_WIDTH, LABEL_HEIGHT);
+        audioLabel.focusTraversableProperty().set(false);
 
         lowerVolumeLabel = new Label("-");
         initializeTrackObject(lowerVolumeLabel, getTrackCoordinates().lowerVolumeLabelX, getTrackCoordinates().lowerVolumeLabelY, LOWER_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
+        lowerVolumeLabel.focusTraversableProperty().set(false);
 
         volumeSlider = new Slider();
         initializeTrackObject(volumeSlider, getTrackCoordinates().volumeSliderX, getTrackCoordinates().volumeSliderY, VOLUME_SLIDER_WIDTH, SLIDER_HEIGHT);
         volumeSlider.setMax(VOLUME_SLIDER_MAX);
         volumeSlider.setValue(volumeSlider.getMax());
+        volumeSlider.focusTraversableProperty().set(false);
 
         raiseVolumeLabel = new Label("+");
         initializeTrackObject(raiseVolumeLabel, getTrackCoordinates().raiseVolumeLabelX, getTrackCoordinates().raiseVolumeLabelY, RAISE_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
+        raiseVolumeLabel.focusTraversableProperty().set(false);
 
         PPRButton = new Button();
         initializeTrackObject(PPRButton, getTrackCoordinates().PPRButtonX, getTrackCoordinates().PPRButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
+        PPRButton.focusTraversableProperty().set(false);
 
         timeSlider = new Slider();
         initializeTrackObject(timeSlider, getTrackCoordinates().timeSliderX, getTrackCoordinates().timeSliderY, TIME_SLIDER_WIDTH, SLIDER_HEIGHT);
+        timeSlider.focusTraversableProperty().set(false);
 
         currentTimeLabel = new Label();
         initializeTrackObject(currentTimeLabel, getTrackCoordinates().currentTimeLabelX, getTrackCoordinates().currentTimeLabelY, CURRENT_TIME_LABEL_WIDTH, LABEL_HEIGHT);
+        currentTimeLabel.focusTraversableProperty().set(false);
 
         totalTimeLabel = new Label();
         initializeTrackObject(totalTimeLabel, getTrackCoordinates().totalTimeLabelX, getTrackCoordinates().totalTimeLabelY, TOTAL_TIME_LABEL_WIDTH, LABEL_HEIGHT);
+        totalTimeLabel.focusTraversableProperty().set(false);
 
         // TODO: Make this button not look terrible.
         removeTrackButton = new Button("x");
@@ -281,9 +281,11 @@ public class AudioTrack extends Track{
         removeTrackButton.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
         removeTrackButton.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
         initializeTrackObject(removeTrackButton, getTrackCoordinates().removeTrackButtonX, getTrackCoordinates().removeTrackButtonY, REMOVE_TRACK_BUTTON_SIZE, REMOVE_TRACK_BUTTON_SIZE);
+        removeTrackButton.focusTraversableProperty().set(false);
 
         lowerSeparator = new Separator();
         initializeTrackObject(lowerSeparator, getTrackCoordinates().upperSeparatorX, getTrackCoordinates().upperSeparatorY + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
+        lowerSeparator.focusTraversableProperty().set(false);
 
         initializeTrack();
     }

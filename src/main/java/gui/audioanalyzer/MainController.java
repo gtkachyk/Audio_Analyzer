@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
@@ -22,7 +23,11 @@ public class MainController implements Initializable {
     ScrollPane scrollPane;
     @FXML
     AnchorPane anchorPane;
+    @FXML
+    MenuItem menuItem;
+
     private MasterTrack masterTrack; // Private so masterTrack can't access itself through masterTrack.controller.
+    boolean darkMode = false;
 
     /**
      * Called to initialize a controller after its root element has been completely processed.
@@ -127,24 +132,66 @@ public class MainController implements Initializable {
     }
 
     @FXML
-    void setDarkMode(){
-        BackgroundFill backgroundFill = new BackgroundFill(Color.BLACK, null, null);
-        Background background = new Background(backgroundFill);
-        scrollPane.setBackground(background);
-        anchorPane.setBackground(background);
-        setScrollBarStyle(scrollPane, "-fx-background-color: black; -fx-border-color: black");
-        setCornerStyle(scrollPane, "-fx-background-color: black; -fx-border-color: black");
+    void setMode(){
+        if(darkMode){
+            BackgroundFill backgroundFill = new BackgroundFill(Color.WHITE, null, null);
+            Background background = new Background(backgroundFill);
+            scrollPane.setBackground(background);
+            anchorPane.setBackground(background);
+            setScrollBarStyle(scrollPane, "-fx-background-color: white; -fx-border-color: white");
+            setCornerStyle(scrollPane, "-fx-background-color: white; -fx-border-color: white");
+
+            masterTrack.trackLabel.textFillProperty().set(Color.BLACK);
+            masterTrack.focusTrackLabel.textFillProperty().set(Color.BLACK);
+            masterTrack.lowerVolumeLabel.textFillProperty().set(Color.BLACK);
+            masterTrack.raiseVolumeLabel.textFillProperty().set(Color.BLACK);
+            masterTrack.currentTimeLabel.textFillProperty().set(Color.BLACK);
+            masterTrack.totalTimeLabel.textFillProperty().set(Color.BLACK);
+
+            for(AudioTrack track: masterTrack.audioTracks){
+                track.trackLabel.textFillProperty().set(Color.BLACK);
+                track.audioLabel.textFillProperty().set(Color.BLACK);
+                track.lowerVolumeLabel.textFillProperty().set(Color.BLACK);
+                track.raiseVolumeLabel.textFillProperty().set(Color.BLACK);
+                track.currentTimeLabel.textFillProperty().set(Color.BLACK);
+                track.totalTimeLabel.textFillProperty().set(Color.BLACK);
+            }
+            darkMode = false;
+            menuItem.setText("Dark Mode");
+        }
+        else{
+            BackgroundFill backgroundFill = new BackgroundFill(Color.BLACK, null, null);
+            Background background = new Background(backgroundFill);
+            scrollPane.setBackground(background);
+            anchorPane.setBackground(background);
+            setScrollBarStyle(scrollPane, "-fx-background-color: black; -fx-border-color: black");
+            setCornerStyle(scrollPane, "-fx-background-color: black; -fx-border-color: black");
+
+            masterTrack.trackLabel.textFillProperty().set(Color.WHITE);
+            masterTrack.focusTrackLabel.textFillProperty().set(Color.WHITE);
+            masterTrack.lowerVolumeLabel.textFillProperty().set(Color.WHITE);
+            masterTrack.raiseVolumeLabel.textFillProperty().set(Color.WHITE);
+            masterTrack.currentTimeLabel.textFillProperty().set(Color.WHITE);
+            masterTrack.totalTimeLabel.textFillProperty().set(Color.WHITE);
+
+            for(AudioTrack track: masterTrack.audioTracks){
+                track.trackLabel.textFillProperty().set(Color.WHITE);
+                track.audioLabel.textFillProperty().set(Color.WHITE);
+                track.lowerVolumeLabel.textFillProperty().set(Color.WHITE);
+                track.raiseVolumeLabel.textFillProperty().set(Color.WHITE);
+                track.currentTimeLabel.textFillProperty().set(Color.WHITE);
+                track.totalTimeLabel.textFillProperty().set(Color.WHITE);
+            }
+            darkMode = true;
+            menuItem.setText("Light Mode");
+        }
     }
 
     private void setScrollBarStyle(ScrollPane scrollPane, String style){
         for(Node node: scrollPane.lookupAll(".scroll-bar")){
             if(node instanceof ScrollBar){
                 ScrollBar scrollBar = (ScrollBar) node;
-                System.out.println(scrollBar.toString());
                 scrollBar.setStyle(style);
-                if(!scrollBar.isVisible()){
-                    System.out.println("Found invisible scroll bar");
-                }
             }
         }
     }

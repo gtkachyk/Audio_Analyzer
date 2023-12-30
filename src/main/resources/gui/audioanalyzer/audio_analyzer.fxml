@@ -39,20 +39,20 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="vBox" prefHeight="382.0" prefWidth="444.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.audioanalyzer.MainController">
+<VBox fx:id="vBox" focusTraversable="false"  prefHeight="382.0" prefWidth="444.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.audioanalyzer.MainController">
   <children>
     <MenuBar fx:id="mainMenuBar" focusTraversable="false" stylesheets="@menuStyles.css" VBox.vgrow="NEVER">
       <menus>
         <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
           <items>
-            <MenuItem fx:id="selectFileMenuItem" mnemonicParsing="false" onAction="#setDarkMode" text="Dark Mode" />
+            <MenuItem fx:id="menuItem" mnemonicParsing="false" onAction="#setMode" text="Dark Mode" />
           </items>
         </Menu>
       </menus>
     </MenuBar>
-      <ScrollPane fx:id="scrollPane" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+      <ScrollPane fx:id="scrollPane" focusTraversable="false" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
          <content>
-          <AnchorPane fx:id="anchorPane" maxHeight="-1.0" maxWidth="-1.0" prefWidth="444.0" />
+          <AnchorPane fx:id="anchorPane" focusTraversable="false" maxHeight="-1.0" maxWidth="-1.0" prefWidth="444.0" />
          </content>
       </ScrollPane>
   </children>

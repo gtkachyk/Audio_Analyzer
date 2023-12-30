@@ -67,44 +67,57 @@ public class MasterTrack extends Track{
 
         trackLabel = new Label("Master");
         initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
+        trackLabel.focusTraversableProperty().set(false);
 
         focusTrackLabel = new Label("Focus Track: " + getFocusTrack());
         initializeTrackObject(focusTrackLabel, getTrackCoordinates().focusTrackLabelX, getTrackCoordinates().focusTrackLabelY, AUDIO_LABEL_WIDTH, LABEL_HEIGHT);
+        focusTrackLabel.focusTraversableProperty().set(false);
 
         lowerVolumeLabel = new Label("-");
         initializeTrackObject(lowerVolumeLabel, getTrackCoordinates().lowerVolumeLabelX, getTrackCoordinates().lowerVolumeLabelY, LOWER_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
+        lowerVolumeLabel.focusTraversableProperty().set(false);
 
         volumeSlider = new Slider();
         initializeTrackObject(volumeSlider, getTrackCoordinates().volumeSliderX, getTrackCoordinates().volumeSliderY, VOLUME_SLIDER_WIDTH, SLIDER_HEIGHT);
         volumeSlider.setMax(VOLUME_SLIDER_MAX);
         volumeSlider.setValue(volumeSlider.getMax());
+        volumeSlider.focusTraversableProperty().set(false);
 
         raiseVolumeLabel = new Label("+");
         initializeTrackObject(raiseVolumeLabel, getTrackCoordinates().raiseVolumeLabelX, getTrackCoordinates().raiseVolumeLabelY, RAISE_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
+        raiseVolumeLabel.focusTraversableProperty().set(false);
 
         PPRButton = new Button();
         initializeTrackObject(PPRButton, getTrackCoordinates().PPRButtonX, getTrackCoordinates().PPRButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
+        PPRButton.focusTraversableProperty().set(false);
 
         timeSlider = new Slider();
         initializeTrackObject(timeSlider, getTrackCoordinates().timeSliderX, getTrackCoordinates().timeSliderY, TIME_SLIDER_WIDTH, SLIDER_HEIGHT);
+        timeSlider.focusTraversableProperty().set(false);
 
         currentTimeLabel = new Label("00:00 / ");
         initializeTrackObject(currentTimeLabel, getTrackCoordinates().currentTimeLabelX, getTrackCoordinates().currentTimeLabelY, CURRENT_TIME_LABEL_WIDTH, LABEL_HEIGHT);
+        currentTimeLabel.focusTraversableProperty().set(false);
 
         totalTimeLabel = new Label("00:00");
         initializeTrackObject(totalTimeLabel, getTrackCoordinates().totalTimeLabelX, getTrackCoordinates().totalTimeLabelY, TOTAL_TIME_LABEL_WIDTH, LABEL_HEIGHT);
+        totalTimeLabel.focusTraversableProperty().set(false);
 
         switchButton = new Button("Focus");
         initializeTrackObject(switchButton, getTrackCoordinates().switchButtonX, getTrackCoordinates().switchButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
+        switchButton.focusTraversableProperty().set(false);
 
         syncButton = new Button("Unlock");
         initializeTrackObject(syncButton, getTrackCoordinates().syncButtonX, getTrackCoordinates().syncButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
+        syncButton.focusTraversableProperty().set(false);
 
         addTrackButton = new Button("Add Track");
         initializeTrackObject(addTrackButton, getTrackCoordinates().addTrackButtonX, getTrackCoordinates().addTrackButtonY, ADD_TRACK_BUTTON_WIDTH, ADD_TRACK_BUTTON_HEIGHT);
+        addTrackButton.focusTraversableProperty().set(false);
 
         lowerSeparator = new Separator();
         initializeTrackObject(lowerSeparator, 0.0, MasterTrackCoordinates.MASTER_TRACK_SEPARATOR_Y_COORDINATE, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
+        lowerSeparator.focusTraversableProperty().set(false);
 
         initializeTrack();
     }
