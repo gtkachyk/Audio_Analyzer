@@ -5,8 +5,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -14,6 +16,8 @@ import java.util.ResourceBundle;
 public class MainController implements Initializable {
 
     // Data.
+    @FXML
+    VBox vBox;
     @FXML
     ScrollPane scrollPane;
     @FXML
@@ -46,6 +50,7 @@ public class MainController implements Initializable {
         anchorPaneChildren.add(track.timeSlider);
         anchorPaneChildren.add(track.currentTimeLabel);
         anchorPaneChildren.add(track.totalTimeLabel);
+        anchorPaneChildren.add(track.lowerSeparator);
     }
 
     /**
@@ -68,7 +73,6 @@ public class MainController implements Initializable {
     void showAudioTrack(AudioTrack track){
         showTrack(track);
         ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
-        anchorPaneChildren.add(track.upperSeparator);
         anchorPaneChildren.add(track.audioLabel);
         anchorPaneChildren.add(track.removeTrackButton);
     }
@@ -87,6 +91,7 @@ public class MainController implements Initializable {
         anchorPaneChildren.remove(track.timeSlider);
         anchorPaneChildren.remove(track.currentTimeLabel);
         anchorPaneChildren.remove(track.totalTimeLabel);
+        anchorPaneChildren.remove(track.lowerSeparator);
     }
 
     /**
@@ -96,7 +101,6 @@ public class MainController implements Initializable {
     void removeAudioTrack(AudioTrack track){
         removeTrack(track);
         ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
-        anchorPaneChildren.remove(track.upperSeparator);
         anchorPaneChildren.remove(track.audioLabel);
         anchorPaneChildren.remove(track.removeTrackButton);
     }
@@ -109,30 +113,47 @@ public class MainController implements Initializable {
         showMasterTrack(masterTrack);
     }
 
-    void resizeStageForNewAudioTrack(){
+    void resizeStageForAudioTrackChange(){
         // Resize stage.
         Scene scene = anchorPane.getScene();
         if(scene != null){
             Stage stage = (Stage) scene.getWindow();
             if(stage != null){
-                double stageHeight = stage.getHeight();
-                double newHeight = stageHeight + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT;
-                stage.setHeight(newHeight);
-                stage.setMaxHeight(newHeight);
+                double newHeight = (masterTrack.numberOfAudioTracks * AudioTrackCoordinates.AUDIO_TRACK_HEIGHT) + TrackCoordinates.MASTER_TRACK_SEPARATOR_Y_COORDINATE + 45.0 + 10.0;
+                stage.setHeight(newHeight + AudioAnalyzerApplication.SCROLL_BAR_PADDING);
+                stage.setMaxHeight(newHeight + AudioAnalyzerApplication.SCROLL_BAR_PADDING);
             }
         }
     }
 
-    void resizeStageForRemovedAudioTrack(){
-        // Resize stage.
-        Scene scene = anchorPane.getScene();
-        if(scene != null){
-            Stage stage = (Stage) scene.getWindow();
-            if(stage != null){
-                double stageHeight = stage.getHeight();
-                double newHeight = stageHeight - AudioTrackCoordinates.AUDIO_TRACK_HEIGHT;
-                stage.setHeight(newHeight);
-                stage.setMaxHeight(newHeight);
+    @FXML
+    void setDarkMode(){
+        BackgroundFill backgroundFill = new BackgroundFill(Color.BLACK, null, null);
+        Background background = new Background(backgroundFill);
+        scrollPane.setBackground(background);
+        anchorPane.setBackground(background);
+        setScrollBarStyle(scrollPane, "-fx-background-color: black; -fx-border-color: black");
+        setCornerStyle(scrollPane, "-fx-background-color: black; -fx-border-color: black");
+    }
+
+    private void setScrollBarStyle(ScrollPane scrollPane, String style){
+        for(Node node: scrollPane.lookupAll(".scroll-bar")){
+            if(node instanceof ScrollBar){
+                ScrollBar scrollBar = (ScrollBar) node;
+                System.out.println(scrollBar.toString());
+                scrollBar.setStyle(style);
+                if(!scrollBar.isVisible()){
+                    System.out.println("Found invisible scroll bar");
+                }
+            }
+        }
+    }
+
+    private void setCornerStyle(ScrollPane scrollPane, String style){
+        for(Node node: scrollPane.lookupAll(".corner")){
+            if(node instanceof StackPane){
+                StackPane corner = (StackPane) node;
+                corner.setStyle(style);
             }
         }
     }

@@ -12,7 +12,7 @@ public class AudioAnalyzerApplication extends Application {
     static final int SCENE_WIDTH = 445;
     static final int SCENE_HEIGHT = 305;
     static final int SCROLL_BAR_PADDING = 25; // Found though trial and error.
-    static final int STAGE_MIN_HEIGHT = 234; // Also found through trial and error.
+    static final int STAGE_MIN_HEIGHT = 234; // Also found through trial and error. Original value: 234.
     static final String APPLICATION_FXML_FILE_NAME = "audio_analyzer.fxml";
     static final String STAGE_TITLE = "Audio Analyzer";
 
@@ -23,7 +23,7 @@ public class AudioAnalyzerApplication extends Application {
         stage.setTitle(STAGE_TITLE);
         stage.setResizable(true);
         stage.setMinHeight(STAGE_MIN_HEIGHT);
-        stage.setMaxHeight(STAGE_MIN_HEIGHT + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT);
+        stage.setMaxHeight(STAGE_MIN_HEIGHT + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT + 10.0);
 
         // Make the width of the stage not resizable.
         stage.setMinWidth(SCENE_WIDTH + SCROLL_BAR_PADDING);

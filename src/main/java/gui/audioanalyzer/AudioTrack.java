@@ -45,8 +45,12 @@ public class AudioTrack extends Track{
     private MasterTrack masterTrack; // The master track that controls this audio track.
 
     // JavaFX objects.
-    @FXML
-    Separator upperSeparator;
+//    @FXML
+//    Separator upperSeparator;
+//
+//    @FXML
+//    Separator lowerSeparator;
+
     @FXML
     Label audioLabel;
     @FXML
@@ -236,8 +240,8 @@ public class AudioTrack extends Track{
         this.trackNumber = trackNumber;
         trackCoordinates = coordinates;
 
-        upperSeparator = new Separator();
-        initializeTrackObject(upperSeparator, 0.0, getTrackCoordinates().upperSeparatorY, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
+//        upperSeparator = new Separator();
+//        initializeTrackObject(upperSeparator, 0.0, getTrackCoordinates().upperSeparatorY, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
 
         trackLabel = new Label("Track " + this.trackNumber);
         initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
@@ -277,6 +281,9 @@ public class AudioTrack extends Track{
         removeTrackButton.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
         removeTrackButton.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
         initializeTrackObject(removeTrackButton, getTrackCoordinates().removeTrackButtonX, getTrackCoordinates().removeTrackButtonY, REMOVE_TRACK_BUTTON_SIZE, REMOVE_TRACK_BUTTON_SIZE);
+
+        lowerSeparator = new Separator();
+        initializeTrackObject(lowerSeparator, getTrackCoordinates().upperSeparatorX, getTrackCoordinates().upperSeparatorY + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
 
         initializeTrack();
     }
@@ -497,7 +504,7 @@ public class AudioTrack extends Track{
      * Moves the coordinates of all GUI objects of this track up by one track size.
      */
     void shiftTrackUp(){
-        shiftTrackObjectUp(upperSeparator, upperSeparator.getLayoutY());
+        shiftTrackObjectUp(lowerSeparator, lowerSeparator.getLayoutY());
         shiftTrackObjectUp(trackLabel, trackLabel.getLayoutY());
         shiftTrackObjectUp(audioLabel, audioLabel.getLayoutY());
         shiftTrackObjectUp(lowerVolumeLabel, lowerVolumeLabel.getLayoutY());

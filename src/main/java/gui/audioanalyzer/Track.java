@@ -3,6 +3,7 @@ package gui.audioanalyzer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
 import javafx.util.Duration;
 import java.lang.reflect.InvocationTargetException;
@@ -47,6 +48,8 @@ public abstract class Track {
     Label currentTimeLabel;
     @FXML
     Label totalTimeLabel;
+    @FXML
+    Separator lowerSeparator;
 
     static MainController controller;
 

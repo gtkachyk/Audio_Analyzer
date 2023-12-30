@@ -8,6 +8,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
 import javafx.util.Duration;
@@ -102,6 +103,9 @@ public class MasterTrack extends Track{
         addTrackButton = new Button("Add Track");
         initializeTrackObject(addTrackButton, getTrackCoordinates().addTrackButtonX, getTrackCoordinates().addTrackButtonY, ADD_TRACK_BUTTON_WIDTH, ADD_TRACK_BUTTON_HEIGHT);
 
+        lowerSeparator = new Separator();
+        initializeTrackObject(lowerSeparator, 0.0, MasterTrackCoordinates.MASTER_TRACK_SEPARATOR_Y_COORDINATE, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
+
         initializeTrack();
     }
 
@@ -151,7 +155,16 @@ public class MasterTrack extends Track{
                     audioTrack.volumeSlider.setDisable(true);
                 }
 
-                controller.resizeStageForNewAudioTrack();
+                controller.resizeStageForAudioTrackChange();
+
+                for(Track track: audioTracks){
+                    if(track.trackNumber == audioTracks.size()){
+                        track.lowerSeparator.setVisible(false);
+                    }
+                    else{
+                        track.lowerSeparator.setVisible(true);
+                    }
+                }
             }
         });
 
@@ -374,6 +387,15 @@ public class MasterTrack extends Track{
                 }
             }
         }
-        controller.resizeStageForRemovedAudioTrack();
+        controller.resizeStageForAudioTrackChange();
+
+        for(Track audioTrack: audioTracks){
+            if(audioTrack.trackNumber == audioTracks.size()){
+                audioTrack.lowerSeparator.setVisible(false);
+            }
+            else{
+                audioTrack.lowerSeparator.setVisible(true);
+            }
+        }
     }
 }
