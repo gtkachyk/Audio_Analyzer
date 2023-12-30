@@ -5,15 +5,17 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
-
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
 
     // Data.
+    @FXML
+    ScrollPane scrollPane;
     @FXML
     AnchorPane anchorPane;
     private MasterTrack masterTrack; // Private so masterTrack can't access itself through masterTrack.controller.
@@ -114,7 +116,9 @@ public class MainController implements Initializable {
             Stage stage = (Stage) scene.getWindow();
             if(stage != null){
                 double stageHeight = stage.getHeight();
-                stage.setHeight(stageHeight + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT);
+                double newHeight = stageHeight + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT;
+                stage.setHeight(newHeight);
+                stage.setMaxHeight(newHeight);
             }
         }
     }
@@ -126,7 +130,9 @@ public class MainController implements Initializable {
             Stage stage = (Stage) scene.getWindow();
             if(stage != null){
                 double stageHeight = stage.getHeight();
-                stage.setHeight(stageHeight - AudioTrackCoordinates.AUDIO_TRACK_HEIGHT);
+                double newHeight = stageHeight - AudioTrackCoordinates.AUDIO_TRACK_HEIGHT;
+                stage.setHeight(newHeight);
+                stage.setMaxHeight(newHeight);
             }
         }
     }

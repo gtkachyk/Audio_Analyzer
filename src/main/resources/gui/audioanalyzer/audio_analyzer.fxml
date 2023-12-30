@@ -50,7 +50,7 @@
         </Menu>
       </menus>
     </MenuBar>
-      <ScrollPane VBox.vgrow="ALWAYS">
+      <ScrollPane fx:id="scrollPane" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
          <content>
           <AnchorPane fx:id="anchorPane" maxHeight="-1.0" maxWidth="-1.0" prefWidth="444.0" />
          </content>

@@ -19,6 +19,7 @@ public class MasterTrack extends Track{
     private static final double ADD_TRACK_BUTTON_WIDTH = 69.6;
     private static final double ADD_TRACK_BUTTON_HEIGHT = 25.6;
     private static final double MILLISECONDS_PER_SECOND = 1000.0;
+    private static final int MAX_TRACKS = 10;
 
     // JavaFX objects.
     @FXML
@@ -136,6 +137,9 @@ public class MasterTrack extends Track{
             @Override
             public void handle(ActionEvent actionEvent) {
                 numberOfAudioTracks++;
+                if(numberOfAudioTracks >= MAX_TRACKS){
+                    addTrackButton.setDisable(true);
+                }
                 AudioTrack audioTrack = new AudioTrack(numberOfAudioTracks, new AudioTrackCoordinates(numberOfAudioTracks), MasterTrack.this);
                 controller.showAudioTrack(audioTrack);
                 audioTracks.add(audioTrack);
@@ -355,6 +359,10 @@ public class MasterTrack extends Track{
         controller.removeAudioTrack(track);
         audioTracks.remove(track);
         numberOfAudioTracks--;
+
+        if(numberOfAudioTracks < MAX_TRACKS){
+            addTrackButton.setDisable(false);
+        }
 
         // Shift up tracks and update track numbers.
         if(numberOfAudioTracks > 0){

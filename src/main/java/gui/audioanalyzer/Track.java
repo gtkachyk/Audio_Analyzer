@@ -13,7 +13,7 @@ public abstract class Track {
     // Constants.
     static final double LABEL_HEIGHT = 17.6;
     static final double SLIDER_HEIGHT = 14.4;
-    static final double SEPARATOR_WIDTH = 445.0;
+    static final double SEPARATOR_WIDTH = 470.0;
     static final double SEPARATOR_HEIGHT = 14.4;
     static final double TRACK_LABEL_WIDTH = 45.0; // Original value: 38.4.
     static final double AUDIO_LABEL_WIDTH = 100.0; // Original value: 76.0.
