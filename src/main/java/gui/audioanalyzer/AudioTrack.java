@@ -224,7 +224,6 @@ public class AudioTrack extends Track{
     private final EventHandler<MouseEvent> removeTrackButtonOnClickEH = new EventHandler<MouseEvent>() {
         @Override
         public void handle(MouseEvent mouseEvent) {
-            // TODO: Renumber audio tracks after a track is removed.
             masterTrack.removeAudioTrack(AudioTrack.this);
         }
     };
@@ -286,6 +285,15 @@ public class AudioTrack extends Track{
         lowerSeparator = new Separator();
         initializeTrackObject(lowerSeparator, getTrackCoordinates().upperSeparatorX, getTrackCoordinates().upperSeparatorY + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
         lowerSeparator.focusTraversableProperty().set(false);
+
+        if(controller.darkMode){
+            trackLabel.textFillProperty().set(Color.WHITE);
+            audioLabel.textFillProperty().set(Color.WHITE);
+            lowerVolumeLabel.textFillProperty().set(Color.WHITE);
+            raiseVolumeLabel.textFillProperty().set(Color.WHITE);
+            currentTimeLabel.textFillProperty().set(Color.WHITE);
+            totalTimeLabel.textFillProperty().set(Color.WHITE);
+        }
 
         initializeTrack();
     }
@@ -481,6 +489,7 @@ public class AudioTrack extends Track{
     }
 
     void pprOnAction(){
+        if(audioFile == null || media == null || mediaPlayer == null) return;
         bindCurrentTimeLabel();
         if(atEndOfMedia){
             timeSlider.setValue(0.0);

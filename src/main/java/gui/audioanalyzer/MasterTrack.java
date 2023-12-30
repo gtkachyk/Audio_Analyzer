@@ -190,28 +190,27 @@ public class MasterTrack extends Track{
             @Override
             public void handle(ActionEvent actionEvent) {
                 if(PPRButton.getText().equals("Pause")){
-                    PPRButton.setText("Play");
                     for(AudioTrack track: audioTracks){
+                        if(track.audioFile == null || track.media == null || track.mediaPlayer == null) return;
                         // Pause all playing tracks.
                         if(track.isPlaying){
                             track.pprOnAction();
-//                            track.PPRButton.fire();
                             if(track.atEndOfMedia){
                                 track.pprOnAction();
-//                                track.PPRButton.fire();
                             }
                         }
                     }
+                    PPRButton.setText("Play");
                 }
                 else if(PPRButton.getText().equals("Play")){
-                    PPRButton.setText("Pause");
                     for(AudioTrack track: audioTracks){
+                        if(track.audioFile == null || track.media == null || track.mediaPlayer == null) return;
                         // Play all paused tracks.
                         if(!track.isPlaying){
                             track.pprOnAction();
-//                            track.PPRButton.fire();
                         }
                     }
+                    PPRButton.setText("Pause");
                 }
                 else if(PPRButton.getText().equals("Restart")){
                     // TODO: Fix bug: tracks do not restart when PPRButton reads 'Restart'.
@@ -380,7 +379,11 @@ public class MasterTrack extends Track{
         }
     }
 
+    // TODO: Fix bug: When synced and audio track is removed while playing, master track current time label does not update when a new track is added.
     void removeAudioTrack(AudioTrack track){
+        if(track.isPlaying){
+            track.mediaPlayer.stop();
+        }
         int removedTrackNumber = track.trackNumber;
         controller.removeAudioTrack(track);
         audioTracks.remove(track);
