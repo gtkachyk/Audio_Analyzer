@@ -2,23 +2,23 @@ package gui.audioanalyzer;
 
 public class MasterTrackCoordinates extends TrackCoordinates{
 
+    // Constants.
     static final double OFFSET_FROM_TOP = 30.0; // The distance between the top of the window and first row of elements in the master track.
     static final double ROW_ONE_AND_PPR_BUTTON_GAP = 26.0;
     static final double ROW_ONE_AND_TIME_SLIDER_GAP = 32.0;
     static final double ROW_ONE_AND_TIME_LABELS_GAP = 32.0;
     static final double ROW_ONE_AND_SWITCH_BUTTON_GAP = 61.0;
     static final double ROW_ONE_AND_BOTTOM_BUTTONS_GAP = 97.0;
-//    static final double MASTER_TRACK_HEIGHT = 163.0;
     static final double FOCUS_TRACK_LABEL_X_COORDINATE = 92.0;
-    static final double ADD_TRACK_BUTTON_X_COORDINATE = 339.0;
-//    static final double ADD_TRACK_BUTTON_Y_COORDINATE = 127.0;
+    static final double ADD_TRACK_BUTTON_X_COORDINATE = 357.0; // Original value 339.0.
 
-
+    // X coordinates.
     double focusTrackLabelX;
     double switchButtonX;
     double syncButtonX;
     double addTrackButtonX;
 
+    // Y coordinates.
     double focusTrackLabelY;
     double switchButtonY;
     double syncButtonY;

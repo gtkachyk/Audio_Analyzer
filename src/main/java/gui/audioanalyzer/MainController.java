@@ -68,6 +68,7 @@ public class MainController implements Initializable {
         ObservableList<Node> anchorPaneChildren = anchorPane.getChildren();
         anchorPaneChildren.add(track.upperSeparator);
         anchorPaneChildren.add(track.audioLabel);
+        anchorPaneChildren.add(track.removeTrackButton);
     }
 
     /**

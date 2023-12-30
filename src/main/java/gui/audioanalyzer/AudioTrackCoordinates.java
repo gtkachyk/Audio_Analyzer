@@ -9,12 +9,16 @@ public class AudioTrackCoordinates extends TrackCoordinates{
     static final double TRACK_ONE_ROW_TWO_Y_COORDINATE = 221.0; // Only the PPR button.
     static final double TRACK_ONE_ROW_THREE_Y_COORDINATE = 225.0;
     static final double AUDIO_LABEL_X_COORDINATE = 92.0;
+    static final double REMOVE_TRACK_BUTTON_X_COORDINATE = 422.0; // Original value 400.0.
 
     // Other data.
     double upperSeparatorX;
     double audioLabelX;
+    double removeTrackButtonX;
+
     double upperSeparatorY;
     double audioLabelY;
+    double removeTrackButtonY;
 
     public AudioTrackCoordinates(int trackNumber){
         double offsetFromFirstTrack = calculateOffset(trackNumber);
@@ -42,6 +46,7 @@ public class AudioTrackCoordinates extends TrackCoordinates{
         raiseVolumeLabelX = RAISE_VOLUME_LABEL_X_COORDINATE;
         currentTimeLabelX = CURRENT_TIME_LABEL_X_COORDINATE;
         totalTimeLabelX = TOTAL_TIME_LABEL_X_COORDINATE;
+        removeTrackButtonX = REMOVE_TRACK_BUTTON_X_COORDINATE;
     }
 
     void setYCoordinates(double offset){
@@ -49,5 +54,6 @@ public class AudioTrackCoordinates extends TrackCoordinates{
         trackLabelY = audioLabelY = lowerVolumeLabelY = volumeSliderY = raiseVolumeLabelY = TRACK_ONE_ROW_ONE_Y_COORDINATE + offset;
         PPRButtonY = TRACK_ONE_ROW_TWO_Y_COORDINATE + offset;
         timeSliderY = currentTimeLabelY = totalTimeLabelY = TRACK_ONE_ROW_THREE_Y_COORDINATE + offset;
+        removeTrackButtonY = upperSeparatorY + 13.0; // Arbitrary offset.
     }
 }
