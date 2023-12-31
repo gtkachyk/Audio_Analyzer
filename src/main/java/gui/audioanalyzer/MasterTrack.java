@@ -367,6 +367,12 @@ public class MasterTrack extends Track{
     }
 
     private void removeAudioTrackBackendAdjust(AudioTrack track){
+        // Determine if the track to be removed is focused.
+        boolean trackFocused = false;
+        if(track.focused){
+            trackFocused = true;
+        }
+
         // If needed, unsync the track to prepare it for removal.
         if(synced){
             unSyncTrack(track);
@@ -392,8 +398,16 @@ public class MasterTrack extends Track{
         numberOfAudioTracks--;
 
         // Resync the longest track if needed.
-        if(synced && longestTrackRemoved){
-            syncTrack(longestAudioTrack);
+        if(synced){
+            if(trackFocused){
+                // Resync volume sliders of remaining tracks.
+                for(AudioTrack audioTrack: audioTracks){
+                    bindSliderValueProperties(volumeSlider, audioTrack.volumeSlider);
+                }
+            }
+            else if(longestTrackRemoved){
+                syncTrack(longestAudioTrack);
+            }
         }
     }
 
