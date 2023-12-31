@@ -33,7 +33,12 @@ public class MasterTrack extends Track{
     Button addTrackButton;
 
     // Other data.
-    boolean synced = true;
+    boolean synced = false;
+    ArrayList<AudioTrack> audioTracks = new ArrayList<>(); // Track #n = audioTracks.get(n - 1).
+    ArrayList<AudioTrack> audioTracksSortedByDuration = new ArrayList<>(); // Sorted by increasing order of MediaPlayer duration.
+    AudioTrack longestAudioTrack = null;
+    int numberOfAudioTracks = 0;
+
     private final ChangeListener<Number> timeSliderChangeListener = new ChangeListener<Number>() {
         @Override
         public void changed(ObservableValue observableValue, Number oldValue, Number newValue) {
@@ -56,9 +61,33 @@ public class MasterTrack extends Track{
         }
     };
 
-    ArrayList<AudioTrack> audioTracks = new ArrayList<>();
-    AudioTrack longestAudioTrack = null;
-    int numberOfAudioTracks = 0;
+    private final EventHandler<MouseEvent> timeSliderOnDragDetectedEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            if(synced){
+                // Mute audio if scrubbing.
+                for(AudioTrack track: audioTracks){
+                    track.mediaPlayer.setMute(true);
+                    track.isMuted = true;
+                }
+            }
+        }
+    };
+
+    private final EventHandler<MouseEvent> timeSliderOnMouseReleasedEH = new EventHandler<MouseEvent>() {
+        @Override
+        public void handle(MouseEvent event) {
+            if(synced){
+                // Un-mute audio after scrubbing.
+                for(AudioTrack track: audioTracks){
+                    track.mediaPlayer.setMute(false);
+                    track.isMuted = false;
+                    track.pauseTime = track.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+                    // Update time label to fix sluggish time bug.
+                }
+            }
+        }
+    };
 
     public MasterTrack(MasterTrackCoordinates masterTrackCoordinates, MainController controller){
         Track.controller = controller;
@@ -107,7 +136,7 @@ public class MasterTrack extends Track{
         initializeTrackObject(switchButton, getTrackCoordinates().switchButtonX, getTrackCoordinates().switchButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
         switchButton.focusTraversableProperty().set(false);
 
-        syncButton = new Button("Unlock");
+        syncButton = new Button("Sync");
         initializeTrackObject(syncButton, getTrackCoordinates().syncButtonX, getTrackCoordinates().syncButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
         syncButton.focusTraversableProperty().set(false);
 
@@ -186,6 +215,7 @@ public class MasterTrack extends Track{
         // And it should read 'Play' otherwise.
         // If it reads 'Play' it should force all tracks to play when pressed.
         // If it reads 'Pause' it should force all tracks to pause when pressed.
+        // TODO: Make tracks play from position of master track when unsynced.
         PPRButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
@@ -217,6 +247,9 @@ public class MasterTrack extends Track{
                 }
             }
         });
+
+        timeSlider.onDragDetectedProperty().set(timeSliderOnDragDetectedEH);
+        timeSlider.onMouseReleasedProperty().set(timeSliderOnMouseReleasedEH);
     }
 
     MasterTrackCoordinates getTrackCoordinates(){
@@ -224,48 +257,13 @@ public class MasterTrack extends Track{
     }
 
     /**
-     * Binds the valueProperty of two sliders to each other. Binding is bidirectional.
+     * Binds the valueProperty of two sliders to each other. Binding is unidirectional.
      * @param sliderOne The first slider to bind.
      * @param sliderTwo The second slider to bind.
      */
     public void bindSliderValueProperties(Slider sliderOne, Slider sliderTwo) {
-        sliderOne.valueProperty().bindBidirectional(sliderTwo.valueProperty());
-    }
-
-    /**
-     * Binds the maxProperty of sliderOne to sliderTwo. Binding is unidirectional.
-     * @param sliderOne The slider whose maxProperty will be bound to sliderTwo.
-     * @param sliderTwo The slider whose maxProperty will not be bound.
-     */
-    public void bindSliderMaxValueProperties(Slider sliderOne, Slider sliderTwo){
-        sliderOne.maxProperty().bind(sliderTwo.maxProperty());
-    }
-
-    /**
-     * Binds the onMouseClicked property of two sliders to each other. Binding is bidirectional.
-     * @param sliderOne The first slider to bind.
-     * @param sliderTwo The second slider to bind.
-     */
-    public void bindSliderOnMouseClickedProperty(Slider sliderOne, Slider sliderTwo){
-        sliderOne.onMouseClickedProperty().bindBidirectional(sliderTwo.onMouseClickedProperty());
-    }
-
-    /**
-     * Binds the onDragDetected property of two sliders to each other. Binding is bidirectional.
-     * @param sliderOne The first slider to bind.
-     * @param sliderTwo The second slider to bind.
-     */
-    public void bindSliderOnDragDetectedProperty(Slider sliderOne, Slider sliderTwo){
-        sliderOne.onDragDetectedProperty().bindBidirectional(sliderTwo.onDragDetectedProperty());
-    }
-
-    /**
-     * Binds the onMouseReleased property of two sliders to each other. Binding is bidirectional.
-     * @param sliderOne The first slider to bind.
-     * @param sliderTwo The second slider to bind.
-     */
-    public void bindSliderOnMouseReleasedProperty(Slider sliderOne, Slider sliderTwo){
-        sliderOne.onMouseReleasedProperty().bindBidirectional(sliderTwo.onMouseReleasedProperty());
+        // Has to be bidirectional, otherwise the master time slider won't scroll automatically when played.
+        sliderTwo.valueProperty().bindBidirectional(sliderOne.valueProperty());
     }
 
     /**
@@ -273,89 +271,53 @@ public class MasterTrack extends Track{
      * @param labelOne The label whose textProperty will be bound to labelTwo.
      * @param labelTwo The label whose textProperty will not be bound.
      */
-    public void bindLabelValueProperties(Label labelOne, Label labelTwo){
+    public void bindLabelTextProperties(Label labelOne, Label labelTwo){
         labelOne.textProperty().bind(labelTwo.textProperty());
-    }
-
-    /**
-     * Binds the textProperty of buttonOne to buttonTwo. Binding is bidirectional.
-     * @param buttonOne The button whose textProperty will be bound to buttonTwo.
-     * @param buttonTwo The button whose textProperty will not be bound.
-     */
-    public void bindButtonTextProperties(Button buttonOne, Button buttonTwo){
-        buttonTwo.textProperty().bindBidirectional(buttonOne.textProperty());
     }
 
     /**
      * Binds properties of this master track and all AudioTracks needed to synchronize them.
      */
     void sync(){
-        // Remove the listener from the time slider value property.
-        timeSlider.valueProperty().removeListener(timeSliderChangeListener);
+        bindLabelTextProperties(currentTimeLabel, longestAudioTrack.currentTimeLabel);
 
-        // Create unidirectional bindings.
-        bindSliderMaxValueProperties(timeSlider, longestAudioTrack.timeSlider);
-        bindLabelValueProperties(totalTimeLabel, longestAudioTrack.totalTimeLabel);
-        bindLabelValueProperties(currentTimeLabel, longestAudioTrack.currentTimeLabel);
-
-        // Create bidirectional bindings.
         for(AudioTrack track: audioTracks){
-            track.pauseTime = timeSlider.getValue(); // Update pause time so all tracks resume from the position of the master track time slider.
-            bindSliderValueProperties(track.timeSlider, timeSlider);
-            bindSliderValueProperties(track.volumeSlider, volumeSlider); // Bind volumes.
-            bindSliderOnMouseClickedProperty(timeSlider, track.timeSlider);
-            bindSliderOnDragDetectedProperty(timeSlider, track.timeSlider);
-            bindSliderOnMouseReleasedProperty(timeSlider, track.timeSlider);
-            bindButtonTextProperties(PPRButton, track.PPRButton);
-
+            bindSliderValueProperties(timeSlider, track.timeSlider);
+            bindSliderValueProperties(volumeSlider, track.volumeSlider);
             track.PPRButton.setDisable(true);
             track.timeSlider.setDisable(true);
             track.volumeSlider.setDisable(true);
         }
     }
 
+    void syncLongestTrack(){
+        bindLabelTextProperties(currentTimeLabel, longestAudioTrack.currentTimeLabel);
+        bindSliderValueProperties(timeSlider, longestAudioTrack.timeSlider);
+        bindSliderValueProperties(volumeSlider, longestAudioTrack.volumeSlider);
+    }
+
     /**
      * Unbinds all bound properties of the master track.
      */
     public void unSync(){
-        // Unbind unidirectional bindings.
-        timeSlider.maxProperty().unbind();
         currentTimeLabel.textProperty().unbind();
-        totalTimeLabel.textProperty().unbind();
 
-        // Unbind bidirectional bindings.
         for(AudioTrack track: audioTracks){
-            Bindings.unbindBidirectional(timeSlider.valueProperty(), track.timeSlider.valueProperty());
-            Bindings.unbindBidirectional(track.timeSlider.onMouseClickedProperty(), timeSlider.onMouseClickedProperty());
-            Bindings.unbindBidirectional(volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
-            Bindings.unbindBidirectional(track.timeSlider.onDragDetectedProperty(), timeSlider.onDragDetectedProperty());
-            Bindings.unbindBidirectional(track.timeSlider.onMouseReleasedProperty(), timeSlider.onMouseReleasedProperty());
-            Bindings.unbindBidirectional(PPRButton.textProperty(), track.PPRButton.textProperty());
+            timeSlider.valueProperty().unbindBidirectional(track.timeSlider.valueProperty());
+            volumeSlider.valueProperty().unbindBidirectional(track.volumeSlider.valueProperty());
+            track.timeSlider.valueProperty().unbindBidirectional(timeSlider.valueProperty());
+            track.volumeSlider.valueProperty().unbindBidirectional(volumeSlider.valueProperty());
 
             track.PPRButton.setDisable(false);
             track.timeSlider.setDisable(false);
             track.volumeSlider.setDisable(false);
         }
-
-        // These properties linger if not set to null. Unbinding them alone does not remove them.
-        timeSlider.onMouseClickedProperty().set(null);
-        timeSlider.onMouseReleasedProperty().set(null);
-        timeSlider.onDragDetectedProperty().set(null);
-
-        // Add a listener to the time slider to update the current time label when unsynced.
-        timeSlider.valueProperty().addListener(timeSliderChangeListener);
     }
 
-    void pauseAllTracks(){
-        for(AudioTrack track: audioTracks){
-            if(track.PPRButton.getText().equals("Pause")){
-                track.PPRButton.fire();
-            }
-            if(track.PPRButton.getText().equals("Restart")){
-                track.PPRButton.fire();
-                track.PPRButton.fire();
-            }
-        }
+    void unSyncLongestTrack(){
+        currentTimeLabel.textProperty().unbind();
+        timeSlider.valueProperty().unbindBidirectional(longestAudioTrack.timeSlider.valueProperty());
+        volumeSlider.valueProperty().unbindBidirectional(longestAudioTrack.volumeSlider.valueProperty());
     }
 
     /**
@@ -379,38 +341,119 @@ public class MasterTrack extends Track{
         }
     }
 
-    // TODO: Fix bug: When synced and audio track is removed while playing, master track current time label does not update when a new track is added.
     void removeAudioTrack(AudioTrack track){
-        if(track.isPlaying){
-            track.mediaPlayer.stop();
-        }
         int removedTrackNumber = track.trackNumber;
+        removeAudioTrackBackendAdjust(track);
+        removeAudioTrackGUIAdjust(track, removedTrackNumber);
+    }
+
+    private void removeAudioTrackGUIAdjust(AudioTrack track, int removedTrackNumber){
+
         controller.removeAudioTrack(track);
-        audioTracks.remove(track);
-        numberOfAudioTracks--;
+        shiftTracksUp(removedTrackNumber);
+        controller.resizeStageForAudioTrackChange();
+        setSeparatorVisibilities();
 
         if(numberOfAudioTracks < MAX_TRACKS){
             addTrackButton.setDisable(false);
         }
+    }
 
-        // Shift up tracks and update track numbers.
-        if(numberOfAudioTracks > 0){
-            for(AudioTrack audioTrack: audioTracks){
-                if(audioTrack.trackNumber > removedTrackNumber){
-                    audioTrack.shiftTrackUp();
-                    audioTrack.trackNumber--;
-                    audioTrack.trackLabel.setText("Track " + audioTrack.trackNumber);
-                }
+    private void removeAudioTrackBackendAdjust(AudioTrack track){
+        boolean longestTrackRemoved = false;
+        if(track.trackNumber == longestAudioTrack.trackNumber){
+            longestTrackRemoved = true;
+            if(synced){
+                unSyncLongestTrack();
             }
         }
-        controller.resizeStageForAudioTrackChange();
 
+        track.mediaPlayer.stop();
+        audioTracks.remove(track);
+        refreshTrackNumbers();
+        audioTracksSortedByDuration.remove(track);
+        refreshLongestAudioTrack();
+        numberOfAudioTracks--;
+
+        if(synced && longestTrackRemoved){
+            syncLongestTrack();
+        }
+    }
+
+    private void syncRefresh(){
+        refreshLongestAudioTrack();
+        unSync();
+        sync();
+    }
+
+    private void refreshTrackNumbers(){
+        for(int i = 0; i < audioTracks.size(); i++){
+            AudioTrack track = audioTracks.get(i);
+            track.trackNumber = i + 1;
+            track.trackLabel.setText("Track " + track.trackNumber);
+        }
+    }
+
+    private void shiftTracksUp(int gap){
+        for(AudioTrack audioTrack: audioTracks){
+            if(audioTrack.trackNumber >= gap){
+                audioTrack.shiftTrackUp();
+            }
+        }
+    }
+
+    private void setSeparatorVisibilities(){
         for(Track audioTrack: audioTracks){
             if(audioTrack.trackNumber == audioTracks.size()){
                 audioTrack.lowerSeparator.setVisible(false);
             }
             else{
                 audioTrack.lowerSeparator.setVisible(true);
+            }
+        }
+    }
+
+    void refreshLongestAudioTrack(){
+        bubbleSortAudioTracksByDuration();
+        longestAudioTrack = audioTracksSortedByDuration.get(audioTracksSortedByDuration.size() - 1);
+
+        // These properties don't need to be bound with formal bindings.
+        totalTimeLabel.setText(longestAudioTrack.totalTimeLabel.getText());
+        timeSlider.setMax(longestAudioTrack.timeSlider.getMax());
+    }
+
+    void bubbleSortAudioTracksByDuration(){
+        int n = audioTracksSortedByDuration.size();
+        int i, j;
+        AudioTrack temp;
+        boolean swapped;
+        for (i = 0; i < n - 1; i++) {
+            swapped = false;
+            for (j = 0; j < n - i - 1; j++) {
+                if(audioTracksSortedByDuration.get(j).mediaPlayer.getTotalDuration().toSeconds() > audioTracksSortedByDuration.get(j + 1).mediaPlayer.getTotalDuration().toSeconds()) {
+                    // Swap arr[j] and arr[j+1]
+                    temp = audioTracksSortedByDuration.get(j);
+                    audioTracksSortedByDuration.set(j, audioTracksSortedByDuration.get(j + 1));
+                    audioTracksSortedByDuration.set(j + 1, temp);
+                    swapped = true;
+                }
+            }
+
+            // If no two elements were
+            // swapped by inner loop, then break
+            if (!swapped)
+                break;
+        }
+    }
+
+    void printAudioTracksSortedByDuration(){
+        for(int i = 0; i < audioTracksSortedByDuration.size(); i++){
+            AudioTrack track = audioTracksSortedByDuration.get(i);
+            if(track.mediaPlayer == null){
+                System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (null)");
+            }
+            else{
+                System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (" + track.mediaPlayer.getTotalDuration().toSeconds() + ")");
             }
         }
     }

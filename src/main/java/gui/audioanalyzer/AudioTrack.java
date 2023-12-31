@@ -39,7 +39,7 @@ public class AudioTrack extends Track{
 
     boolean atEndOfMedia = false;
     boolean isPlaying = false;
-    private boolean isMuted = false;
+    boolean isMuted = false;
     double pauseTime;
     boolean focused = false;
     private MasterTrack masterTrack; // The master track that controls this audio track.
@@ -112,15 +112,21 @@ public class AudioTrack extends Track{
             timeSlider.setMax(newDuration.toSeconds());
             totalTimeLabel.setText(getTime(newDuration));
 
-            // Update the longest track in masterTrack.
-            if(masterTrack.longestAudioTrack == null || mediaPlayer.getTotalDuration().toSeconds() > masterTrack.longestAudioTrack.mediaPlayer.getTotalDuration().toSeconds()){
-                masterTrack.longestAudioTrack = AudioTrack.this;
-
-                // Update master track length even if not synced.
-                masterTrack.bindSliderMaxValueProperties(masterTrack.timeSlider, timeSlider);
-                masterTrack.bindLabelValueProperties(masterTrack.totalTimeLabel, totalTimeLabel);
+            // masterTrack.longestTrack is automatically updated when a new track is added or the file of an existing track changes.
+            boolean trackInSortedList = false;
+            for(AudioTrack track: masterTrack.audioTracksSortedByDuration){
+                if(track.trackNumber == trackNumber){
+                    trackInSortedList = true;
+                }
+            }
+            if(!trackInSortedList){
                 if(masterTrack.synced){
-                    masterTrack.bindLabelValueProperties(masterTrack.currentTimeLabel, currentTimeLabel);
+                    masterTrack.unSyncLongestTrack();
+                }
+                masterTrack.audioTracksSortedByDuration.add(AudioTrack.this);
+                masterTrack.refreshLongestAudioTrack();
+                if(masterTrack.synced){
+                    masterTrack.syncLongestTrack();
                 }
             }
         }
@@ -315,7 +321,7 @@ public class AudioTrack extends Track{
         addListeners();
     }
 
-    private void addListeners(){
+    void addListeners(){
         PPRButton.setOnAction(pprButtonOnActionEH);
 
         // This is needed to ensure that when the PPR button is pressed, the appropriate change is made to the master track PPR button text.
@@ -334,7 +340,7 @@ public class AudioTrack extends Track{
         trackLabel.setOnMouseClicked(trackLabelOnMouseClickedEH);
     }
 
-    private void removeListeners(){
+    void removeListeners(){
         if(mediaPlayer != null){
             mediaPlayer.totalDurationProperty().removeListener(mediaPlayerTotalDurationCL);
             mediaPlayer.currentTimeProperty().removeListener(mediaPlayerCurrentTimeCL);
@@ -431,18 +437,18 @@ public class AudioTrack extends Track{
             removeListeners();
             setTrackAudio(selectedFile);
             initializeTrack();
-            if(wasSynced){
-                masterTrack.bindSliderValueProperties(timeSlider, masterTrack.timeSlider);
-                masterTrack.bindSliderValueProperties(volumeSlider, masterTrack.volumeSlider);
-                masterTrack.bindSliderOnMouseClickedProperty(masterTrack.timeSlider, timeSlider);
-                masterTrack.bindSliderOnDragDetectedProperty(masterTrack.timeSlider, timeSlider);
-                masterTrack.bindSliderOnMouseReleasedProperty(masterTrack.timeSlider, timeSlider);
-                masterTrack.bindButtonTextProperties(masterTrack.PPRButton, PPRButton);
-
-                PPRButton.setDisable(true);
-                timeSlider.setDisable(true);
-                volumeSlider.setDisable(true);
-            }
+//            if(wasSynced){
+//                masterTrack.bindSliderValueProperties(timeSlider, masterTrack.timeSlider);
+//                masterTrack.bindSliderValueProperties(volumeSlider, masterTrack.volumeSlider);
+//                masterTrack.bindSliderOnMouseClickedProperty(masterTrack.timeSlider, timeSlider);
+//                masterTrack.bindSliderOnDragDetectedProperty(masterTrack.timeSlider, timeSlider);
+//                masterTrack.bindSliderOnMouseReleasedProperty(masterTrack.timeSlider, timeSlider);
+//                // masterTrack.bindButtonTextProperties(masterTrack.PPRButton, PPRButton);
+//
+//                PPRButton.setDisable(true);
+//                timeSlider.setDisable(true);
+//                volumeSlider.setDisable(true);
+//            }
         }
     }
 
