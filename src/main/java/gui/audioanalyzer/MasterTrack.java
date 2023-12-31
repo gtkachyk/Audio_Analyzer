@@ -11,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 import java.util.ArrayList;
 
@@ -21,6 +22,7 @@ public class MasterTrack extends Track{
     private static final double ADD_TRACK_BUTTON_HEIGHT = 25.6;
     private static final double MILLISECONDS_PER_SECOND = 1000.0;
     private static final int MAX_TRACKS = 10;
+    private static final double TIME_SLIDER_DEFAULT_MAX = 100.0;
 
     // JavaFX objects.
     @FXML
@@ -279,45 +281,51 @@ public class MasterTrack extends Track{
      * Binds properties of this master track and all AudioTracks needed to synchronize them.
      */
     void sync(){
-        bindLabelTextProperties(currentTimeLabel, longestAudioTrack.currentTimeLabel);
-
         for(AudioTrack track: audioTracks){
-            bindSliderValueProperties(timeSlider, track.timeSlider);
-            bindSliderValueProperties(volumeSlider, track.volumeSlider);
-            track.PPRButton.setDisable(true);
-            track.timeSlider.setDisable(true);
-            track.volumeSlider.setDisable(true);
+            syncTrack(track);
         }
     }
 
-    void syncLongestTrack(){
-        bindLabelTextProperties(currentTimeLabel, longestAudioTrack.currentTimeLabel);
-        bindSliderValueProperties(timeSlider, longestAudioTrack.timeSlider);
-        bindSliderValueProperties(volumeSlider, longestAudioTrack.volumeSlider);
+    void syncTrack(AudioTrack track){
+        // Bind master currentTimeLabel to track if track is longest.
+        if(track.trackNumber == longestAudioTrack.trackNumber){
+            bindLabelTextProperties(currentTimeLabel, track.currentTimeLabel);
+        }
+
+        // Update pause time so newly synced tracks snap to the master track time slider before playing for the first time.
+        track.pauseTime = timeSlider.getValue();
+
+        // Bind slider values to master slider values.
+        bindSliderValueProperties(timeSlider, track.timeSlider);
+        bindSliderValueProperties(volumeSlider, track.volumeSlider);
+
+        // Disable redundant buttons.
+        track.PPRButton.setDisable(true);
+        track.timeSlider.setDisable(true);
+        track.volumeSlider.setDisable(true);
     }
 
     /**
      * Unbinds all bound properties of the master track.
      */
     public void unSync(){
-        currentTimeLabel.textProperty().unbind();
-
         for(AudioTrack track: audioTracks){
-            timeSlider.valueProperty().unbindBidirectional(track.timeSlider.valueProperty());
-            volumeSlider.valueProperty().unbindBidirectional(track.volumeSlider.valueProperty());
-            track.timeSlider.valueProperty().unbindBidirectional(timeSlider.valueProperty());
-            track.volumeSlider.valueProperty().unbindBidirectional(volumeSlider.valueProperty());
-
-            track.PPRButton.setDisable(false);
-            track.timeSlider.setDisable(false);
-            track.volumeSlider.setDisable(false);
+            unSyncTrack(track);
         }
     }
 
-    void unSyncLongestTrack(){
-        currentTimeLabel.textProperty().unbind();
-        timeSlider.valueProperty().unbindBidirectional(longestAudioTrack.timeSlider.valueProperty());
-        volumeSlider.valueProperty().unbindBidirectional(longestAudioTrack.volumeSlider.valueProperty());
+    void unSyncTrack(AudioTrack track){
+        if(track.trackNumber == longestAudioTrack.trackNumber){
+            currentTimeLabel.textProperty().unbind();
+        }
+        timeSlider.valueProperty().unbindBidirectional(track.timeSlider.valueProperty());
+        volumeSlider.valueProperty().unbindBidirectional(track.volumeSlider.valueProperty());
+        track.timeSlider.valueProperty().unbindBidirectional(timeSlider.valueProperty());
+        track.volumeSlider.valueProperty().unbindBidirectional(volumeSlider.valueProperty());
+
+        track.PPRButton.setDisable(false);
+        track.timeSlider.setDisable(false);
+        track.volumeSlider.setDisable(false);
     }
 
     /**
@@ -348,7 +356,6 @@ public class MasterTrack extends Track{
     }
 
     private void removeAudioTrackGUIAdjust(AudioTrack track, int removedTrackNumber){
-
         controller.removeAudioTrack(track);
         shiftTracksUp(removedTrackNumber);
         controller.resizeStageForAudioTrackChange();
@@ -360,30 +367,34 @@ public class MasterTrack extends Track{
     }
 
     private void removeAudioTrackBackendAdjust(AudioTrack track){
+        // If needed, unsync the track to prepare it for removal.
+        if(synced){
+            unSyncTrack(track);
+        }
+
+        // Stop the tracks media player.
+        track.mediaPlayer.stop();
+
+        // Determine if the track to remove is the longest track.
         boolean longestTrackRemoved = false;
         if(track.trackNumber == longestAudioTrack.trackNumber){
             longestTrackRemoved = true;
-            if(synced){
-                unSyncLongestTrack();
-            }
         }
 
-        track.mediaPlayer.stop();
+        // Remove the track and update the track numbers.
         audioTracks.remove(track);
         refreshTrackNumbers();
+
+        // Remove the track from the sorted list and update the longest track.
         audioTracksSortedByDuration.remove(track);
         refreshLongestAudioTrack();
+
         numberOfAudioTracks--;
 
+        // Resync the longest track if needed.
         if(synced && longestTrackRemoved){
-            syncLongestTrack();
+            syncTrack(longestAudioTrack);
         }
-    }
-
-    private void syncRefresh(){
-        refreshLongestAudioTrack();
-        unSync();
-        sync();
     }
 
     private void refreshTrackNumbers(){
@@ -414,12 +425,19 @@ public class MasterTrack extends Track{
     }
 
     void refreshLongestAudioTrack(){
-        bubbleSortAudioTracksByDuration();
-        longestAudioTrack = audioTracksSortedByDuration.get(audioTracksSortedByDuration.size() - 1);
+        if(audioTracksSortedByDuration.size() > 0){
+            bubbleSortAudioTracksByDuration();
+            longestAudioTrack = audioTracksSortedByDuration.get(audioTracksSortedByDuration.size() - 1);
 
-        // These properties don't need to be bound with formal bindings.
-        totalTimeLabel.setText(longestAudioTrack.totalTimeLabel.getText());
-        timeSlider.setMax(longestAudioTrack.timeSlider.getMax());
+            // These properties don't need to be bound with formal bindings.
+            totalTimeLabel.setText(longestAudioTrack.totalTimeLabel.getText());
+            timeSlider.setMax(longestAudioTrack.timeSlider.getMax());
+        }
+        else{
+            longestAudioTrack = null;
+            totalTimeLabel.setText("00:00");
+            timeSlider.setMax(TIME_SLIDER_DEFAULT_MAX);
+        }
     }
 
     void bubbleSortAudioTracksByDuration(){

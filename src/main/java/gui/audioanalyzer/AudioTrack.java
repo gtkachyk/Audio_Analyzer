@@ -121,12 +121,12 @@ public class AudioTrack extends Track{
             }
             if(!trackInSortedList){
                 if(masterTrack.synced){
-                    masterTrack.unSyncLongestTrack();
+                    masterTrack.unSyncTrack(masterTrack.longestAudioTrack);
                 }
                 masterTrack.audioTracksSortedByDuration.add(AudioTrack.this);
                 masterTrack.refreshLongestAudioTrack();
                 if(masterTrack.synced){
-                    masterTrack.syncLongestTrack();
+                    masterTrack.syncTrack(masterTrack.longestAudioTrack);
                 }
             }
         }
