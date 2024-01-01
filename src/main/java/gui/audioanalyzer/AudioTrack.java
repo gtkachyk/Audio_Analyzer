@@ -245,51 +245,9 @@ public class AudioTrack extends Track{
         this.trackNumber = trackNumber;
         trackCoordinates = coordinates;
 
-        trackLabel = new Label("Track " + this.trackNumber);
-        initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
-
-        audioLabel = new Label("song title " + this.trackNumber);
-        initializeTrackObject(audioLabel, getTrackCoordinates().audioLabelX, getTrackCoordinates().audioLabelY, AUDIO_LABEL_WIDTH, LABEL_HEIGHT);
-
-        lowerVolumeLabel = new Label("-");
-        initializeTrackObject(lowerVolumeLabel, getTrackCoordinates().lowerVolumeLabelX, getTrackCoordinates().lowerVolumeLabelY, LOWER_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
-
-        volumeSlider = new Slider();
-        initializeTrackObject(volumeSlider, getTrackCoordinates().volumeSliderX, getTrackCoordinates().volumeSliderY, VOLUME_SLIDER_WIDTH, SLIDER_HEIGHT);
-        volumeSlider.setMax(VOLUME_SLIDER_MAX);
-        volumeSlider.setValue(volumeSlider.getMax());
-
-        raiseVolumeLabel = new Label("+");
-        initializeTrackObject(raiseVolumeLabel, getTrackCoordinates().raiseVolumeLabelX, getTrackCoordinates().raiseVolumeLabelY, RAISE_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
-
-        PPRButton = new Button();
-        initializeTrackObject(PPRButton, getTrackCoordinates().PPRButtonX, getTrackCoordinates().PPRButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
-        PPRButton.setDisable(true);
-
-        timeSlider = new Slider();
-        initializeTrackObject(timeSlider, getTrackCoordinates().timeSliderX, getTrackCoordinates().timeSliderY, TIME_SLIDER_WIDTH, SLIDER_HEIGHT);
-        timeSlider.setDisable(true);
-
-        currentTimeLabel = new Label();
-        initializeTrackObject(currentTimeLabel, getTrackCoordinates().currentTimeLabelX, getTrackCoordinates().currentTimeLabelY, CURRENT_TIME_LABEL_WIDTH, LABEL_HEIGHT);
-
-        totalTimeLabel = new Label();
-        initializeTrackObject(totalTimeLabel, getTrackCoordinates().totalTimeLabelX, getTrackCoordinates().totalTimeLabelY, TOTAL_TIME_LABEL_WIDTH, LABEL_HEIGHT);
-
-        // TODO: Make this button not look terrible.
-        removeTrackButton = new Button("x");
-        removeTrackButton.setMinWidth(REMOVE_TRACK_BUTTON_SIZE);
-        removeTrackButton.setMinHeight(REMOVE_TRACK_BUTTON_SIZE);
-        removeTrackButton.setFont(new Font(removeTrackButton.getFont().getName(), removeTrackButton.getFont().getSize() - 5.0));
-        removeTrackButton.textAlignmentProperty().set(TextAlignment.CENTER);
-        removeTrackButton.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
-        removeTrackButton.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-        initializeTrackObject(removeTrackButton, getTrackCoordinates().removeTrackButtonX, getTrackCoordinates().removeTrackButtonY, REMOVE_TRACK_BUTTON_SIZE, REMOVE_TRACK_BUTTON_SIZE);
-        removeTrackButton.focusTraversableProperty().set(false);
-
-        lowerSeparator = new Separator();
-        initializeTrackObject(lowerSeparator, getTrackCoordinates().upperSeparatorX, getTrackCoordinates().upperSeparatorY + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
-        lowerSeparator.focusTraversableProperty().set(false);
+        instantiateJavaFXObjects();
+        initializeJavaFXObjects();
+        setJavaFXObjectsDefaultProperties();
 
         if(controller.darkMode){
             trackLabel.textFillProperty().set(Color.WHITE);
@@ -299,10 +257,52 @@ public class AudioTrack extends Track{
             currentTimeLabel.textFillProperty().set(Color.WHITE);
             totalTimeLabel.textFillProperty().set(Color.WHITE);
         }
-
-//        audioTrackListeners = new AudioTrackListeners(AudioTrack.this);
-
         initializeTrack();
+    }
+
+    void instantiateJavaFXObjects(){
+        trackLabel = new Label();
+        audioLabel = new Label();
+        lowerVolumeLabel = new Label();
+        volumeSlider = new Slider();
+        raiseVolumeLabel = new Label();
+        PPRButton = new Button();
+        timeSlider = new Slider();
+        currentTimeLabel = new Label();
+        totalTimeLabel = new Label();
+        removeTrackButton = new Button();
+        lowerSeparator = new Separator();
+    }
+
+    void initializeJavaFXObjects(){
+        initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
+        initializeTrackObject(audioLabel, getTrackCoordinates().audioLabelX, getTrackCoordinates().audioLabelY, AUDIO_LABEL_WIDTH, LABEL_HEIGHT);
+        initializeTrackObject(lowerVolumeLabel, getTrackCoordinates().lowerVolumeLabelX, getTrackCoordinates().lowerVolumeLabelY, LOWER_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
+        initializeTrackObject(volumeSlider, getTrackCoordinates().volumeSliderX, getTrackCoordinates().volumeSliderY, VOLUME_SLIDER_WIDTH, SLIDER_HEIGHT);
+        initializeTrackObject(raiseVolumeLabel, getTrackCoordinates().raiseVolumeLabelX, getTrackCoordinates().raiseVolumeLabelY, RAISE_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
+        initializeTrackObject(PPRButton, getTrackCoordinates().PPRButtonX, getTrackCoordinates().PPRButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
+        initializeTrackObject(timeSlider, getTrackCoordinates().timeSliderX, getTrackCoordinates().timeSliderY, TIME_SLIDER_WIDTH, SLIDER_HEIGHT);
+        initializeTrackObject(currentTimeLabel, getTrackCoordinates().currentTimeLabelX, getTrackCoordinates().currentTimeLabelY, CURRENT_TIME_LABEL_WIDTH, LABEL_HEIGHT);
+        initializeTrackObject(totalTimeLabel, getTrackCoordinates().totalTimeLabelX, getTrackCoordinates().totalTimeLabelY, TOTAL_TIME_LABEL_WIDTH, LABEL_HEIGHT);
+        initializeTrackObject(removeTrackButton, getTrackCoordinates().removeTrackButtonX, getTrackCoordinates().removeTrackButtonY, REMOVE_TRACK_BUTTON_SIZE, REMOVE_TRACK_BUTTON_SIZE);
+        initializeTrackObject(lowerSeparator, getTrackCoordinates().upperSeparatorX, getTrackCoordinates().upperSeparatorY + AudioTrackCoordinates.AUDIO_TRACK_HEIGHT, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
+    }
+
+    void setJavaFXObjectsDefaultProperties(){
+        trackLabel.setText("Track " + this.trackNumber);
+        lowerVolumeLabel.setText("-");
+        volumeSlider.setMax(VOLUME_SLIDER_MAX);
+        volumeSlider.setValue(volumeSlider.getMax());
+        raiseVolumeLabel.setText("+");
+        PPRButton.setDisable(true);
+        timeSlider.setDisable(true);
+        removeTrackButton.setText("x");
+        removeTrackButton.setMinWidth(REMOVE_TRACK_BUTTON_SIZE);
+        removeTrackButton.setMinHeight(REMOVE_TRACK_BUTTON_SIZE);
+        removeTrackButton.setFont(new Font(removeTrackButton.getFont().getName(), removeTrackButton.getFont().getSize() - 5.0));
+        removeTrackButton.textAlignmentProperty().set(TextAlignment.CENTER);
+        removeTrackButton.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
+        removeTrackButton.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
     }
 
     @Override

@@ -7,6 +7,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
 import javafx.util.Duration;
+
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -62,7 +64,7 @@ public abstract class Track {
      * @param width
      * @param height
      */
-    void initializeTrackObject(Object trackObject, double xCoordinate, double yCoordinate, double width, double height){
+    void initializeTrackObject(Object trackObject, double xCoordinate, double yCoordinate, double width, double height) {
         Class<?> classObject = trackObject.getClass();
         try{
             Method setLayoutX = classObject.getMethod("setLayoutX", double.class);
