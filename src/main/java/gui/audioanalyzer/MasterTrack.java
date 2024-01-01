@@ -381,8 +381,8 @@ public class MasterTrack extends Track{
 
         // Special case where the last track is removed.
         if(audioTracks.size() == 1){
+            if(PPRButton.getText().equals("Pause")) PPRButton.fire();
             if(synced){
-                if(PPRButton.getText().equals("Pause")) PPRButton.fire();
                 syncButton.fire();
             }
             removeFromAudioTracks(track);
