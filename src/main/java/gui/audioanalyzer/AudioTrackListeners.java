@@ -81,7 +81,8 @@ public class AudioTrackListeners {
                 audioTrack.timeSlider.setMax(newDuration.toSeconds());
                 audioTrack.totalTimeLabel.setText(Track.getTime(newDuration));
 
-                // masterTrack.longestTrack is automatically updated when a new track is added or the file of an existing track changes.
+                // Automatically update the longest track when a new track is added or the file of an existing track changes.
+                // Remove audioTrack from masterTrack.audioTracksSortedByDuration if needed.
                 boolean trackInSortedList = false;
                 int index = 0;
                 for(int i = 0; i < audioTrack.masterTrack.audioTracksSortedByDuration.size(); i++){
@@ -94,13 +95,14 @@ public class AudioTrackListeners {
                     // If this is reached it means the existing audioFile of this track was replaced with a new one.
                     audioTrack.masterTrack.audioTracksSortedByDuration.remove(index);
                 }
-                if(audioTrack.masterTrack.synced){
-                    audioTrack.masterTrack.unSyncTrack(audioTrack.masterTrack.longestAudioTrack);
-                }
+
+                // Add audioTrack from masterTrack.audioTracksSortedByDuration.
                 audioTrack.masterTrack.audioTracksSortedByDuration.add(audioTrack);
                 audioTrack.masterTrack.refreshLongestAudioTrack();
+
+                // Refresh sync if needed.
                 if(audioTrack.masterTrack.synced){
-                    audioTrack.masterTrack.syncTrack(audioTrack.masterTrack.longestAudioTrack);
+                    audioTrack.masterTrack.refreshSync();
                 }
             }
         };
@@ -198,7 +200,7 @@ public class AudioTrackListeners {
         return new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                audioTrack.selectFile();
+                audioTrack.updateFile();
             }
         };
     }

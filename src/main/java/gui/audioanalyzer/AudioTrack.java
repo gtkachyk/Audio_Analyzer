@@ -70,18 +70,6 @@ public class AudioTrack extends Track{
         this.trackNumber = trackNumber;
         trackCoordinates = coordinates;
 
-        instantiateJavaFXObjects();
-        initializeJavaFXObjects();
-        setJavaFXObjectsDefaultProperties();
-
-        if(controller.darkMode){
-            trackLabel.textFillProperty().set(Color.WHITE);
-            audioLabel.textFillProperty().set(Color.WHITE);
-            lowerVolumeLabel.textFillProperty().set(Color.WHITE);
-            raiseVolumeLabel.textFillProperty().set(Color.WHITE);
-            currentTimeLabel.textFillProperty().set(Color.WHITE);
-            totalTimeLabel.textFillProperty().set(Color.WHITE);
-        }
         initializeTrack();
     }
 
@@ -120,6 +108,7 @@ public class AudioTrack extends Track{
         volumeSlider.setValue(volumeSlider.getMax());
         raiseVolumeLabel.setText("+");
         PPRButton.setDisable(true);
+        PPRButton.setText("Play");
         timeSlider.setDisable(true);
         removeTrackButton.setText("x");
         removeTrackButton.setMinWidth(REMOVE_TRACK_BUTTON_SIZE);
@@ -128,22 +117,39 @@ public class AudioTrack extends Track{
         removeTrackButton.textAlignmentProperty().set(TextAlignment.CENTER);
         removeTrackButton.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
         removeTrackButton.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        audioLabel.setText("Add file...");
+    }
+
+    void setStateAfterFileChange(){
+        if(focused){
+            undoFocus();
+        }
+        atEndOfMedia = false;
+        isPlaying = false;
+        isMuted = false;
+        pauseTime = 0.0;
+        PPRButton.setText("Play");
+        timeSlider.setValue(0.0);
     }
 
     @Override
     void initializeTrack(){
+        instantiateJavaFXObjects();
+        initializeJavaFXObjects();
+        setJavaFXObjectsDefaultProperties();
+        setTheme();
         AudioTrackListeners.addStableListeners(AudioTrack.this);
-        setAudioLabelText();
-        PPRButton.setText("Play");
+    }
 
-        if(audioFile == null) return;
-
-        // Bidirectionally bind volume slider value to volume property of media player.
-        mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
-        bindCurrentTimeLabel();
-
-        // Add listeners.
-        AudioTrackListeners.addUnstableListeners(AudioTrack.this);
+    private void setTheme(){
+        if(controller.darkMode){
+            trackLabel.textFillProperty().set(Color.WHITE);
+            audioLabel.textFillProperty().set(Color.WHITE);
+            lowerVolumeLabel.textFillProperty().set(Color.WHITE);
+            raiseVolumeLabel.textFillProperty().set(Color.WHITE);
+            currentTimeLabel.textFillProperty().set(Color.WHITE);
+            totalTimeLabel.textFillProperty().set(Color.WHITE);
+        }
     }
 
     private void setAudioLabelText(){
@@ -217,25 +223,57 @@ public class AudioTrack extends Track{
 
     private void addNewAudioFile(File newFile){
         setTrackAudio(newFile);
-        initializeTrack();
+
+        // Bidirectionally bind volume slider value to volume property of media player.
+        mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
+        bindCurrentTimeLabel();
+
+        // Add listeners.
+        AudioTrackListeners.addUnstableListeners(AudioTrack.this);
     }
 
     private void changeAudioFile(File newFile){
+        // Stop media.
+        mediaPlayer.stop();
+
+        // Unbind properties.
+        mediaPlayer.volumeProperty().unbindBidirectional(volumeSlider.valueProperty());
+        volumeSlider.valueProperty().unbindBidirectional(mediaPlayer.volumeProperty());
+        currentTimeLabel.textProperty().unbind();
+
+        // Update media.
         setTrackAudio(newFile);
+
+        // Refresh listeners.
         AudioTrackListeners.removeUnstableListeners(AudioTrack.this);
         AudioTrackListeners.addUnstableListeners(AudioTrack.this);
-        timeSlider.setValue(0.0);
-        pauseTime = 0.0;
+
+        // Set default values.
+        setStateAfterFileChange();
     }
 
-    void selectFile(){
+    void updateFile(){
         File selectedFile = getNewAudioFile();
         if(selectedFile == null) return;
+
+        // Unsync if needed.
+        boolean synced = false;
+        if(masterTrack.synced){
+            masterTrack.syncButton.fire();
+            synced = true;
+        }
+
         if(trackHasFile()){
             changeAudioFile(selectedFile);
         }
         else {
             addNewAudioFile(selectedFile);
+        }
+
+        // Resync if needed.
+        if(synced){
+            masterTrack.timeSlider.setValue(0.0);
+            masterTrack.syncButton.fire();
         }
 
         masterTrack.PPRButton.setDisable(false);

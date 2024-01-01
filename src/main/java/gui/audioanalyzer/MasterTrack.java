@@ -287,7 +287,9 @@ public class MasterTrack extends Track{
      */
     void sync(){
         for(AudioTrack track: audioTracks){
-            if(track.trackHasFile()) syncTrack(track);
+            if(track.trackHasFile()){
+                syncTrack(track);
+            }
         }
     }
 
@@ -315,7 +317,9 @@ public class MasterTrack extends Track{
      */
     public void unSync(){
         for(AudioTrack track: audioTracks){
-            if(track.trackHasFile()) unSyncTrack(track);
+            if(track.trackHasFile()){
+                unSyncTrack(track);
+            }
         }
     }
 
@@ -331,6 +335,11 @@ public class MasterTrack extends Track{
         track.PPRButton.setDisable(false);
         track.timeSlider.setDisable(false);
         track.volumeSlider.setDisable(false);
+    }
+
+    void refreshSync(){
+        unSync();
+        sync();
     }
 
     /**
