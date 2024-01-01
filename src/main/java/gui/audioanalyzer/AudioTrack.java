@@ -23,6 +23,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,13 +37,14 @@ public class AudioTrack extends Track{
     File audioFile;
     Media media;
     MediaPlayer mediaPlayer;
+    // AudioTrackListeners audioTrackListeners;
 
     boolean atEndOfMedia = false;
     boolean isPlaying = false;
     boolean isMuted = false;
     double pauseTime;
     boolean focused = false;
-    private MasterTrack masterTrack; // The master track that controls this audio track.
+    MasterTrack masterTrack; // The master track that controls this audio track.
 
     // JavaFX objects.
     @FXML
@@ -114,20 +116,24 @@ public class AudioTrack extends Track{
 
             // masterTrack.longestTrack is automatically updated when a new track is added or the file of an existing track changes.
             boolean trackInSortedList = false;
-            for(AudioTrack track: masterTrack.audioTracksSortedByDuration){
-                if(track.trackNumber == trackNumber){
+            int index = 0;
+            for(int i = 0; i < masterTrack.audioTracksSortedByDuration.size(); i++){
+                if(masterTrack.audioTracksSortedByDuration.get(i).trackNumber == trackNumber){
                     trackInSortedList = true;
+                    index = i;
                 }
             }
-            if(!trackInSortedList){
-                if(masterTrack.synced){
-                    masterTrack.unSyncTrack(masterTrack.longestAudioTrack);
-                }
-                masterTrack.audioTracksSortedByDuration.add(AudioTrack.this);
-                masterTrack.refreshLongestAudioTrack();
-                if(masterTrack.synced){
-                    masterTrack.syncTrack(masterTrack.longestAudioTrack);
-                }
+            if(trackInSortedList){
+                // If this is reached it means the existing audioFile of this track was replaced with a new one.
+                masterTrack.audioTracksSortedByDuration.remove(index);
+            }
+            if(masterTrack.synced){
+                masterTrack.unSyncTrack(masterTrack.longestAudioTrack);
+            }
+            masterTrack.audioTracksSortedByDuration.add(AudioTrack.this);
+            masterTrack.refreshLongestAudioTrack();
+            if(masterTrack.synced){
+                masterTrack.syncTrack(masterTrack.longestAudioTrack);
             }
         }
     };
@@ -241,41 +247,34 @@ public class AudioTrack extends Track{
 
         trackLabel = new Label("Track " + this.trackNumber);
         initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
-        trackLabel.focusTraversableProperty().set(false);
 
         audioLabel = new Label("song title " + this.trackNumber);
         initializeTrackObject(audioLabel, getTrackCoordinates().audioLabelX, getTrackCoordinates().audioLabelY, AUDIO_LABEL_WIDTH, LABEL_HEIGHT);
-        audioLabel.focusTraversableProperty().set(false);
 
         lowerVolumeLabel = new Label("-");
         initializeTrackObject(lowerVolumeLabel, getTrackCoordinates().lowerVolumeLabelX, getTrackCoordinates().lowerVolumeLabelY, LOWER_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
-        lowerVolumeLabel.focusTraversableProperty().set(false);
 
         volumeSlider = new Slider();
         initializeTrackObject(volumeSlider, getTrackCoordinates().volumeSliderX, getTrackCoordinates().volumeSliderY, VOLUME_SLIDER_WIDTH, SLIDER_HEIGHT);
         volumeSlider.setMax(VOLUME_SLIDER_MAX);
         volumeSlider.setValue(volumeSlider.getMax());
-        volumeSlider.focusTraversableProperty().set(false);
 
         raiseVolumeLabel = new Label("+");
         initializeTrackObject(raiseVolumeLabel, getTrackCoordinates().raiseVolumeLabelX, getTrackCoordinates().raiseVolumeLabelY, RAISE_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
-        raiseVolumeLabel.focusTraversableProperty().set(false);
 
         PPRButton = new Button();
         initializeTrackObject(PPRButton, getTrackCoordinates().PPRButtonX, getTrackCoordinates().PPRButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
-        PPRButton.focusTraversableProperty().set(false);
+        PPRButton.setDisable(true);
 
         timeSlider = new Slider();
         initializeTrackObject(timeSlider, getTrackCoordinates().timeSliderX, getTrackCoordinates().timeSliderY, TIME_SLIDER_WIDTH, SLIDER_HEIGHT);
-        timeSlider.focusTraversableProperty().set(false);
+        timeSlider.setDisable(true);
 
         currentTimeLabel = new Label();
         initializeTrackObject(currentTimeLabel, getTrackCoordinates().currentTimeLabelX, getTrackCoordinates().currentTimeLabelY, CURRENT_TIME_LABEL_WIDTH, LABEL_HEIGHT);
-        currentTimeLabel.focusTraversableProperty().set(false);
 
         totalTimeLabel = new Label();
         initializeTrackObject(totalTimeLabel, getTrackCoordinates().totalTimeLabelX, getTrackCoordinates().totalTimeLabelY, TOTAL_TIME_LABEL_WIDTH, LABEL_HEIGHT);
-        totalTimeLabel.focusTraversableProperty().set(false);
 
         // TODO: Make this button not look terrible.
         removeTrackButton = new Button("x");
@@ -300,6 +299,8 @@ public class AudioTrack extends Track{
             currentTimeLabel.textFillProperty().set(Color.WHITE);
             totalTimeLabel.textFillProperty().set(Color.WHITE);
         }
+
+//        audioTrackListeners = new AudioTrackListeners(AudioTrack.this);
 
         initializeTrack();
     }
@@ -413,42 +414,60 @@ public class AudioTrack extends Track{
         this.audioFile = audioFile;
         media = new Media(this.audioFile.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
+        audioLabel.setText(audioFile.getName());
     }
 
-    private void selectFile(){
-        // Pause all tracks.
-        if(masterTrack.PPRButton.getText().equals("Pause")) masterTrack.PPRButton.fire();
-
-        // Unsync tracks.
-        boolean wasSynced = false;
-        if(masterTrack.synced){
-            wasSynced = true;
-            masterTrack.syncButton.fire();
-        }
-
+    private File getNewAudioFile(){
         // Open the file browser at the current directory.
         final FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
         fileChooser.setTitle("Select a file for track " + trackNumber + "...");
-        File selectedFile = fileChooser.showOpenDialog(new Stage());
+        return fileChooser.showOpenDialog(new Stage());
+    }
 
-        // Initialize the track with the new file.
-        if(selectedFile != null){
-            removeListeners();
-            setTrackAudio(selectedFile);
-            initializeTrack();
-//            if(wasSynced){
-//                masterTrack.bindSliderValueProperties(timeSlider, masterTrack.timeSlider);
-//                masterTrack.bindSliderValueProperties(volumeSlider, masterTrack.volumeSlider);
-//                masterTrack.bindSliderOnMouseClickedProperty(masterTrack.timeSlider, timeSlider);
-//                masterTrack.bindSliderOnDragDetectedProperty(masterTrack.timeSlider, timeSlider);
-//                masterTrack.bindSliderOnMouseReleasedProperty(masterTrack.timeSlider, timeSlider);
-//                // masterTrack.bindButtonTextProperties(masterTrack.PPRButton, PPRButton);
-//
-//                PPRButton.setDisable(true);
-//                timeSlider.setDisable(true);
-//                volumeSlider.setDisable(true);
-//            }
+    private void addNewAudioFile(File newFile){
+        setTrackAudio(newFile);
+        initializeTrack();
+    }
+
+    private void changeAudioFile(File newFile){
+        setTrackAudio(newFile);
+        removeListeners();
+
+        PPRButton.textProperty().addListener(pprButtonTextPropertyCL);
+        volumeSlider.valueProperty().addListener(volumeSliderValuePropertyIL);
+        mediaPlayer.totalDurationProperty().addListener(mediaPlayerTotalDurationCL);
+        timeSlider.valueChangingProperty().addListener(timeSliderValueChangingCL);
+        timeSlider.valueProperty().addListener(timeSliderValueCL);
+        mediaPlayer.currentTimeProperty().addListener(mediaPlayerCurrentTimeCL);
+        mediaPlayer.setOnEndOfMedia(mediaPlayerOnEndOfMediaR);
+        timeSlider.setOnMouseClicked(timeSliderOnMouseClickedEH);
+        timeSlider.setOnMouseReleased(timeSliderOnMouseReleasedEH);
+        timeSlider.setOnDragDetected(timeSliderOnDragDetectedEH);
+
+
+        mediaPlayer.totalDurationProperty().removeListener(mediaPlayerTotalDurationCL);
+        mediaPlayer.totalDurationProperty().addListener(mediaPlayerTotalDurationCL);
+        timeSlider.setValue(0.0);
+        pauseTime = 0.0;
+    }
+
+    void selectFile(){
+        File selectedFile = getNewAudioFile();
+        if(selectedFile == null) return;
+        if(trackHasFile()){
+            changeAudioFile(selectedFile);
+        }
+        else {
+            addNewAudioFile(selectedFile);
+        }
+
+        masterTrack.PPRButton.setDisable(false);
+        masterTrack.syncButton.setDisable(false);
+        masterTrack.timeSlider.setDisable(false);
+        if(!masterTrack.synced){
+            PPRButton.setDisable(false);
+            timeSlider.setDisable(false);
         }
     }
 
@@ -480,7 +499,7 @@ public class AudioTrack extends Track{
         track.trackLabel.borderProperty().set(null);
     }
 
-    private void undoFocus(){
+    void undoFocus(){
         focused = false;
         trackLabel.borderProperty().set(null);
         for(AudioTrack track: masterTrack.audioTracks){
@@ -491,29 +510,6 @@ public class AudioTrack extends Track{
                 }
                 track.volumeSlider.setValue(1.0);
             }
-        }
-    }
-
-    void pprOnAction(){
-        if(audioFile == null || media == null || mediaPlayer == null) return;
-        bindCurrentTimeLabel();
-        if(atEndOfMedia){
-            timeSlider.setValue(0.0);
-            atEndOfMedia = false;
-            isPlaying = false;
-            pauseTime = 0.0; // Update pause time.
-        }
-        if(isPlaying){
-            PPRButton.setText("Play");
-            mediaPlayer.pause();
-            isPlaying = false;
-            pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-        }
-        else{
-            mediaPlayer.seek(Duration.seconds(pauseTime));
-            PPRButton.setText("Pause");
-            mediaPlayer.play();
-            isPlaying = true;
         }
     }
 
@@ -542,6 +538,33 @@ public class AudioTrack extends Track{
         }
         catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e){
             e.printStackTrace();
+        }
+    }
+
+    boolean trackHasFile(){
+        return (audioFile != null) && (media != null) && (mediaPlayer != null);
+    }
+
+    void pprOnAction(){
+        if(audioFile == null || media == null || mediaPlayer == null) return;
+        bindCurrentTimeLabel();
+        if(atEndOfMedia){
+            timeSlider.setValue(0.0);
+            atEndOfMedia = false;
+            isPlaying = false;
+            pauseTime = 0.0; // Update pause time.
+        }
+        if(isPlaying){
+            PPRButton.setText("Play");
+            mediaPlayer.pause();
+            isPlaying = false;
+            pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+        }
+        else{
+            mediaPlayer.seek(Duration.seconds(pauseTime));
+            PPRButton.setText("Pause");
+            mediaPlayer.play();
+            isPlaying = true;
         }
     }
 }

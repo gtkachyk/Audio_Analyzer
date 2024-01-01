@@ -1,5 +1,6 @@
 package gui.audioanalyzer;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -75,6 +76,10 @@ public abstract class Track {
 
             Method setPrefHeight = classObject.getMethod("setPrefHeight", double.class);
             setPrefHeight.invoke(trackObject, height);
+
+            Method focusTraversable = classObject.getMethod("focusTraversableProperty", null);
+            BooleanProperty focusTraversableProperty = (BooleanProperty) focusTraversable.invoke(trackObject);
+            focusTraversableProperty.set(false);
         }
         catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e){
             e.printStackTrace();
@@ -83,7 +88,7 @@ public abstract class Track {
 
     abstract void initializeTrack();
 
-    String getTime(Duration time){
+    static String getTime(Duration time){
         int hours = (int) time.toHours();
         int minutes = (int) time.toMinutes();
         int seconds = (int) time.toSeconds();

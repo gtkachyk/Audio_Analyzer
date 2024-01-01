@@ -69,8 +69,10 @@ public class MasterTrack extends Track{
             if(synced){
                 // Mute audio if scrubbing.
                 for(AudioTrack track: audioTracks){
-                    track.mediaPlayer.setMute(true);
-                    track.isMuted = true;
+                    if(track.trackHasFile()){
+                        track.mediaPlayer.setMute(true);
+                        track.isMuted = true;
+                    }
                 }
             }
         }
@@ -82,10 +84,12 @@ public class MasterTrack extends Track{
             if(synced){
                 // Un-mute audio after scrubbing.
                 for(AudioTrack track: audioTracks){
-                    track.mediaPlayer.setMute(false);
-                    track.isMuted = false;
-                    track.pauseTime = track.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-                    // Update time label to fix sluggish time bug.
+                    if(track.trackHasFile()){
+                        track.mediaPlayer.setMute(false);
+                        track.isMuted = false;
+                        track.pauseTime = track.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+                        // Update time label to fix sluggish time bug.
+                    }
                 }
             }
         }
@@ -98,57 +102,47 @@ public class MasterTrack extends Track{
 
         trackLabel = new Label("Master");
         initializeTrackObject(trackLabel, getTrackCoordinates().trackLabelX, getTrackCoordinates().trackLabelY, TRACK_LABEL_WIDTH, LABEL_HEIGHT);
-        trackLabel.focusTraversableProperty().set(false);
 
         focusTrackLabel = new Label("Focus Track: " + getFocusTrack());
         initializeTrackObject(focusTrackLabel, getTrackCoordinates().focusTrackLabelX, getTrackCoordinates().focusTrackLabelY, AUDIO_LABEL_WIDTH, LABEL_HEIGHT);
-        focusTrackLabel.focusTraversableProperty().set(false);
 
         lowerVolumeLabel = new Label("-");
         initializeTrackObject(lowerVolumeLabel, getTrackCoordinates().lowerVolumeLabelX, getTrackCoordinates().lowerVolumeLabelY, LOWER_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
-        lowerVolumeLabel.focusTraversableProperty().set(false);
 
         volumeSlider = new Slider();
         initializeTrackObject(volumeSlider, getTrackCoordinates().volumeSliderX, getTrackCoordinates().volumeSliderY, VOLUME_SLIDER_WIDTH, SLIDER_HEIGHT);
         volumeSlider.setMax(VOLUME_SLIDER_MAX);
         volumeSlider.setValue(volumeSlider.getMax());
-        volumeSlider.focusTraversableProperty().set(false);
 
         raiseVolumeLabel = new Label("+");
         initializeTrackObject(raiseVolumeLabel, getTrackCoordinates().raiseVolumeLabelX, getTrackCoordinates().raiseVolumeLabelY, RAISE_VOLUME_LABEL_WIDTH, LABEL_HEIGHT);
-        raiseVolumeLabel.focusTraversableProperty().set(false);
 
         PPRButton = new Button();
         initializeTrackObject(PPRButton, getTrackCoordinates().PPRButtonX, getTrackCoordinates().PPRButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
-        PPRButton.focusTraversableProperty().set(false);
+        PPRButton.setDisable(true);
 
         timeSlider = new Slider();
         initializeTrackObject(timeSlider, getTrackCoordinates().timeSliderX, getTrackCoordinates().timeSliderY, TIME_SLIDER_WIDTH, SLIDER_HEIGHT);
-        timeSlider.focusTraversableProperty().set(false);
+        timeSlider.setDisable(true);
 
         currentTimeLabel = new Label("00:00 / ");
         initializeTrackObject(currentTimeLabel, getTrackCoordinates().currentTimeLabelX, getTrackCoordinates().currentTimeLabelY, CURRENT_TIME_LABEL_WIDTH, LABEL_HEIGHT);
-        currentTimeLabel.focusTraversableProperty().set(false);
 
         totalTimeLabel = new Label("00:00");
         initializeTrackObject(totalTimeLabel, getTrackCoordinates().totalTimeLabelX, getTrackCoordinates().totalTimeLabelY, TOTAL_TIME_LABEL_WIDTH, LABEL_HEIGHT);
-        totalTimeLabel.focusTraversableProperty().set(false);
 
         switchButton = new Button("Focus");
         initializeTrackObject(switchButton, getTrackCoordinates().switchButtonX, getTrackCoordinates().switchButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
-        switchButton.focusTraversableProperty().set(false);
 
         syncButton = new Button("Sync");
         initializeTrackObject(syncButton, getTrackCoordinates().syncButtonX, getTrackCoordinates().syncButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
-        syncButton.focusTraversableProperty().set(false);
+        syncButton.setDisable(true);
 
         addTrackButton = new Button("Add Track");
         initializeTrackObject(addTrackButton, getTrackCoordinates().addTrackButtonX, getTrackCoordinates().addTrackButtonY, ADD_TRACK_BUTTON_WIDTH, ADD_TRACK_BUTTON_HEIGHT);
-        addTrackButton.focusTraversableProperty().set(false);
 
         lowerSeparator = new Separator();
         initializeTrackObject(lowerSeparator, 0.0, MasterTrackCoordinates.MASTER_TRACK_SEPARATOR_Y_COORDINATE, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
-        lowerSeparator.focusTraversableProperty().set(false);
 
         initializeTrack();
     }
@@ -158,9 +152,9 @@ public class MasterTrack extends Track{
         PPRButton.setText("Play");
 
         // Add listeners.
-        syncButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+        syncButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void handle(MouseEvent event) {
+            public void handle(ActionEvent event) {
                 if(synced){
                     syncButton.setText("Sync");
                     synced = false;
@@ -223,9 +217,8 @@ public class MasterTrack extends Track{
             public void handle(ActionEvent actionEvent) {
                 if(PPRButton.getText().equals("Pause")){
                     for(AudioTrack track: audioTracks){
-                        if(track.audioFile == null || track.media == null || track.mediaPlayer == null) return;
-                        // Pause all playing tracks.
-                        if(track.isPlaying){
+                        if(track.trackHasFile() && track.isPlaying){
+                            // Pause all playing tracks.
                             track.pprOnAction();
                             if(track.atEndOfMedia){
                                 track.pprOnAction();
@@ -236,9 +229,8 @@ public class MasterTrack extends Track{
                 }
                 else if(PPRButton.getText().equals("Play")){
                     for(AudioTrack track: audioTracks){
-                        if(track.audioFile == null || track.media == null || track.mediaPlayer == null) return;
-                        // Play all paused tracks.
-                        if(!track.isPlaying){
+                        if(track.trackHasFile() && !track.isPlaying){
+                            // Play all paused tracks.
                             track.pprOnAction();
                         }
                     }
@@ -282,7 +274,7 @@ public class MasterTrack extends Track{
      */
     void sync(){
         for(AudioTrack track: audioTracks){
-            syncTrack(track);
+            if(track.trackHasFile()) syncTrack(track);
         }
     }
 
@@ -310,7 +302,7 @@ public class MasterTrack extends Track{
      */
     public void unSync(){
         for(AudioTrack track: audioTracks){
-            unSyncTrack(track);
+            if(track.trackHasFile()) unSyncTrack(track);
         }
     }
 
@@ -364,9 +356,26 @@ public class MasterTrack extends Track{
         if(numberOfAudioTracks < MAX_TRACKS){
             addTrackButton.setDisable(false);
         }
+        refreshDisabledStatus();
     }
 
     private void removeAudioTrackBackendAdjust(AudioTrack track){
+        // Special case where the track to remove has no file.
+        if(!track.trackHasFile()){
+            removeFromAudioTracks(track);
+            return;
+        }
+
+        // Special case where the last track is removed.
+        if(audioTracks.size() == 1){
+            if(synced){
+                if(PPRButton.getText().equals("Pause")) PPRButton.fire();
+                syncButton.fire();
+            }
+            removeFromAudioTracks(track);
+            return;
+        }
+
         // Determine if the track to be removed is focused.
         boolean trackFocused = false;
         if(track.focused){
@@ -387,15 +396,7 @@ public class MasterTrack extends Track{
             longestTrackRemoved = true;
         }
 
-        // Remove the track and update the track numbers.
-        audioTracks.remove(track);
-        refreshTrackNumbers();
-
-        // Remove the track from the sorted list and update the longest track.
-        audioTracksSortedByDuration.remove(track);
-        refreshLongestAudioTrack();
-
-        numberOfAudioTracks--;
+        removeFromAudioTracks(track);
 
         // Resync the longest track if needed.
         if(synced){
@@ -406,9 +407,23 @@ public class MasterTrack extends Track{
                 }
             }
             else if(longestTrackRemoved){
-                syncTrack(longestAudioTrack);
+                if(longestAudioTrack != null){
+                    syncTrack(longestAudioTrack);
+                }
             }
         }
+    }
+
+    private void removeFromAudioTracks(AudioTrack track){
+        // Remove the track and update the track numbers.
+        audioTracks.remove(track);
+        refreshTrackNumbers();
+
+        // Remove the track from the sorted list and update the longest track.
+        audioTracksSortedByDuration.remove(track);
+        refreshLongestAudioTrack();
+
+        numberOfAudioTracks--;
     }
 
     private void refreshTrackNumbers(){
@@ -476,6 +491,47 @@ public class MasterTrack extends Track{
             if (!swapped)
                 break;
         }
+    }
+
+    boolean someTrackHasFile(){
+        for(AudioTrack track: audioTracks){
+            if(track.trackHasFile()) return true;
+        }
+        return false;
+    }
+
+    void refreshDisabledStatus(){
+        if(someTrackHasFile()){
+            PPRButton.setDisable(false);
+            syncButton.setDisable(false);
+            timeSlider.setDisable(false);
+        }
+        else{
+            timeSliderSetDefaultState();
+            pprButtonSetDefaultState();
+            syncButtonSetDefaultState();
+            timeLabelSetDefaultState(currentTimeLabel);
+        }
+    }
+
+    void timeSliderSetDefaultState(){
+        timeSlider.setValue(0.0);
+        timeSlider.setDisable(true);
+    }
+
+    void pprButtonSetDefaultState(){
+        PPRButton.setText("Play");
+        PPRButton.setDisable(true);
+    }
+
+    void syncButtonSetDefaultState(){
+        syncButton.setText("Sync");
+        synced = false;
+        syncButton.setDisable(true);
+    }
+
+    void timeLabelSetDefaultState(Label timeLabel){
+        timeLabel.setText("00:00 /");
     }
 
     void printAudioTracksSortedByDuration(){
