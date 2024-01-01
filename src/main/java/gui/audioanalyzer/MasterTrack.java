@@ -1,23 +1,14 @@
 package gui.audioanalyzer;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
-import javafx.scene.media.MediaPlayer;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.TextAlignment;
-import javafx.util.Duration;
 import java.util.ArrayList;
 
 public class MasterTrack extends Track{
@@ -25,8 +16,8 @@ public class MasterTrack extends Track{
     // Constants.
     private static final double ADD_TRACK_BUTTON_WIDTH = 69.6;
     private static final double ADD_TRACK_BUTTON_HEIGHT = 25.6;
-    private static final double MILLISECONDS_PER_SECOND = 1000.0;
-    private static final int MAX_TRACKS = 10;
+    static final double MILLISECONDS_PER_SECOND = 1000.0;
+    static final int MAX_TRACKS = 10;
     private static final double TIME_SLIDER_DEFAULT_MAX = 100.0;
 
     // JavaFX objects.
@@ -46,59 +37,13 @@ public class MasterTrack extends Track{
     AudioTrack longestAudioTrack = null;
     int numberOfAudioTracks = 0;
 
-    private final ChangeListener<Number> timeSliderChangeListener = new ChangeListener<Number>() {
-        @Override
-        public void changed(ObservableValue observableValue, Number oldValue, Number newValue) {
-            currentTimeLabel.setText(getTime(new Duration(timeSlider.getValue() * MILLISECONDS_PER_SECOND)) + " / ");
-        }
-    };
-
-    private final EventHandler<MouseEvent> switchButtonOnMouseClickedEH = new EventHandler<MouseEvent>() {
-        @Override
-        public void handle(MouseEvent event) {
-            String currentFocusTrack = getFocusTrack();
-            if(currentFocusTrack.equals("None")){
-                for(AudioTrack track: audioTracks){
-                    if(track.trackNumber == 1){
-                        track.volumeSlider.setValue(1.0);
-                        Bindings.unbindBidirectional(volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
-                    }
-                }
-            }
-        }
-    };
-
-    private final EventHandler<MouseEvent> timeSliderOnDragDetectedEH = new EventHandler<MouseEvent>() {
-        @Override
-        public void handle(MouseEvent event) {
-            if(synced){
-                // Mute audio if scrubbing.
-                for(AudioTrack track: audioTracks){
-                    if(track.trackHasFile()){
-                        track.mediaPlayer.setMute(true);
-                        track.isMuted = true;
-                    }
-                }
-            }
-        }
-    };
-
-    private final EventHandler<MouseEvent> timeSliderOnMouseReleasedEH = new EventHandler<MouseEvent>() {
-        @Override
-        public void handle(MouseEvent event) {
-            if(synced){
-                // Un-mute audio after scrubbing.
-                for(AudioTrack track: audioTracks){
-                    if(track.trackHasFile()){
-                        track.mediaPlayer.setMute(false);
-                        track.isMuted = false;
-                        track.pauseTime = track.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-                        // Update time label to fix sluggish time bug.
-                    }
-                }
-            }
-        }
-    };
+    ChangeListener<Number> timeSliderChangeListener;
+    EventHandler<MouseEvent> switchButtonOnMouseClickedEH;
+    EventHandler<MouseEvent> timeSliderOnDragDetectedEH;
+    EventHandler<MouseEvent> timeSliderOnMouseReleasedEH;
+    EventHandler<ActionEvent> syncButtonOnActionEH;
+    EventHandler<ActionEvent> addTrackButtonOnAction;
+    EventHandler<ActionEvent> pprButtonOnActionEH;
 
     public MasterTrack(MasterTrackCoordinates masterTrackCoordinates, MainController controller){
         Track.controller = controller;
@@ -151,6 +96,7 @@ public class MasterTrack extends Track{
         volumeSlider.setValue(volumeSlider.getMax());
         raiseVolumeLabel.setText("+");
         PPRButton.setDisable(true);
+        PPRButton.setText("Play");
         timeSlider.setDisable(true);
         currentTimeLabel.setText("00:00 / ");
         totalTimeLabel.setText("00:00");
@@ -162,101 +108,12 @@ public class MasterTrack extends Track{
 
     @Override
     void initializeTrack() {
-        PPRButton.setText("Play");
-
         // Add listeners.
-        syncButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                if(synced){
-                    syncButton.setText("Sync");
-                    synced = false;
-                    unSync();
-                }
-                else{
-                    syncButton.setText("Unlock");
-                    synced = true;
-                    sync();
-                }
-
-                // Refocus focused track if one exists.
-                for(AudioTrack track: audioTracks){
-                    if(track.focused){
-                        track.focusTrack();
-                    }
-                }
-            }
-        });
-
-        addTrackButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                numberOfAudioTracks++;
-                if(numberOfAudioTracks >= MAX_TRACKS){
-                    addTrackButton.setDisable(true);
-                }
-                AudioTrack audioTrack = new AudioTrack(numberOfAudioTracks, new AudioTrackCoordinates(numberOfAudioTracks), MasterTrack.this);
-                controller.showAudioTrack(audioTrack);
-                audioTracks.add(audioTrack);
-
-                // Disable buttons and slider of new track because it has no file to play.
-                if(synced){
-                    audioTrack.PPRButton.setDisable(true);
-                    audioTrack.timeSlider.setDisable(true);
-                    audioTrack.volumeSlider.setDisable(true);
-                }
-
-                controller.resizeStageForAudioTrackChange();
-
-                for(Track track: audioTracks){
-                    if(track.trackNumber == audioTracks.size()){
-                        track.lowerSeparator.setVisible(false);
-                    }
-                    else{
-                        track.lowerSeparator.setVisible(true);
-                    }
-                }
-            }
-        });
-
-        // The PPR button will play all tracks from their current position.
-        // When not synced, the PPR button should read 'Pause' only if all audio tracks are playing.
-        // And it should read 'Play' otherwise.
-        // If it reads 'Play' it should force all tracks to play when pressed.
-        // If it reads 'Pause' it should force all tracks to pause when pressed.
-        // TODO: Make tracks play from position of master track when unsynced.
-        PPRButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                if(PPRButton.getText().equals("Pause")){
-                    for(AudioTrack track: audioTracks){
-                        if(track.trackHasFile() && track.isPlaying){
-                            // Pause all playing tracks.
-                            track.pprOnAction();
-                            if(track.atEndOfMedia){
-                                track.pprOnAction();
-                            }
-                        }
-                    }
-                    PPRButton.setText("Play");
-                }
-                else if(PPRButton.getText().equals("Play")){
-                    for(AudioTrack track: audioTracks){
-                        if(track.trackHasFile() && !track.isPlaying){
-                            // Play all paused tracks.
-                            track.pprOnAction();
-                        }
-                    }
-                    PPRButton.setText("Pause");
-                }
-                else if(PPRButton.getText().equals("Restart")){
-                    // TODO: Fix bug: tracks do not restart when PPRButton reads 'Restart'.
-                }
-            }
-        });
-
-        timeSlider.onDragDetectedProperty().set(timeSliderOnDragDetectedEH);
-        timeSlider.onMouseReleasedProperty().set(timeSliderOnMouseReleasedEH);
+        MasterTrackListeners.addSyncButtonOnActionEH(MasterTrack.this);
+        MasterTrackListeners.addAddTrackButtonOnAction(MasterTrack.this);
+        MasterTrackListeners.addPPRButtonOnActionEH(MasterTrack.this);
+        MasterTrackListeners.addTimeSliderOnDragDetectedEH(MasterTrack.this);
+        MasterTrackListeners.addTimeSliderOnMouseReleasedEH(MasterTrack.this);
     }
 
     MasterTrackCoordinates getTrackCoordinates(){
@@ -346,7 +203,7 @@ public class MasterTrack extends Track{
      * Determines if any audio track is focused.
      * @return The focused track if one exists, 0 otherwise.
      */
-    private String getFocusTrack(){
+    String getFocusTrack(){
         int notMutedTracks = 0;
         int lastNotMutedTrack = 0;
         for(AudioTrack track: audioTracks){

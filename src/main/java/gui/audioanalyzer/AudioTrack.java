@@ -289,6 +289,7 @@ public class AudioTrack extends Track{
      * Focuses this audio track.
      */
     void focusTrack(){
+        // TODO: Fix bug: focus track volume sliders not synced with master volume slider when synced, and not syncing after unfocused.
         setTrackInFocus(AudioTrack.this);
         for(AudioTrack track: masterTrack.audioTracks){
             if(track.trackNumber != trackNumber){
