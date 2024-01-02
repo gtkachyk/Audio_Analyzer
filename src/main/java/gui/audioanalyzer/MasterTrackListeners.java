@@ -3,11 +3,11 @@ package gui.audioanalyzer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
 public class MasterTrackListeners {
@@ -16,7 +16,10 @@ public class MasterTrackListeners {
         return new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue observableValue, Number oldValue, Number newValue) {
-                masterTrack.currentTimeLabel.setText(masterTrack.getTime(new Duration(masterTrack.timeSlider.getValue() * masterTrack.MILLISECONDS_PER_SECOND)) + " / ");
+                // masterTrack.currentTimeLabel.setText(masterTrack.getTime(new Duration(masterTrack.timeSlider.getValue() * masterTrack.MILLISECONDS_PER_SECOND)) + " / ");
+                if(newValue.doubleValue() == masterTrack.timeSlider.getMax()){
+                    masterTrack.PPRButton.setText("Restart");
+                }
             }
         };
     }
@@ -164,9 +167,9 @@ public class MasterTrackListeners {
                         if(track.trackHasFile() && track.isPlaying){
                             // Pause all playing tracks.
                             track.pprOnAction();
-                            if(track.atEndOfMedia){
-                                track.pprOnAction();
-                            }
+//                            if(track.atEndOfMedia){
+//                                track.pprOnAction();
+//                            }
                         }
                     }
                     masterTrack.PPRButton.setText("Play");
@@ -181,7 +184,17 @@ public class MasterTrackListeners {
                     masterTrack.PPRButton.setText("Pause");
                 }
                 else if(masterTrack.PPRButton.getText().equals("Restart")){
-                    // TODO: Fix bug: tracks do not restart when PPRButton reads 'Restart'.
+                    masterTrack.timeSlider.setValue(0.0);
+
+                    for(AudioTrack track: masterTrack.audioTracks){
+                        track.atEndOfMedia = false;
+                        track.isPlaying = true;
+                        track.pauseTime = 0.0;
+                        track.mediaPlayer.play();
+                    }
+
+                    masterTrack.PPRButton.setText("Play");
+                    masterTrack.PPRButton.fire();
                 }
             }
         };

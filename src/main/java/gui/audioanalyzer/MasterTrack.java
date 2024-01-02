@@ -122,6 +122,8 @@ public class MasterTrack extends Track{
         MasterTrackListeners.addTimeSliderOnDragDetectedEH(MasterTrack.this);
         MasterTrackListeners.addTimeSliderOnMouseReleasedEH(MasterTrack.this);
         MasterTrackListeners.addSwitchButtonOnMouseClickedEH(MasterTrack.this);
+        MasterTrackListeners.addTimeSliderChangeListener(MasterTrack.this);
+
         MasterTrackListeners.addDebugButtonOnMouseActionEH(MasterTrack.this);
     }
 

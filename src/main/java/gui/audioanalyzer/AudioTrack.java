@@ -307,7 +307,12 @@ public class AudioTrack extends Track{
     private void setTrackInFocus(AudioTrack track){
         track.volumeSlider.setValue(1.0);
         track.focused = true;
-        track.trackLabel.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        if(controller.darkMode){
+            track.trackLabel.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        }
+        else{
+            track.trackLabel.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        }
     }
 
     private void setTrackOutOfFocus(AudioTrack track){
@@ -364,21 +369,25 @@ public class AudioTrack extends Track{
     }
 
     void pprOnAction(){
-        if(audioFile == null || media == null || mediaPlayer == null) return;
+        if(!trackHasFile()) return;
         bindCurrentTimeLabel();
         if(atEndOfMedia){
+            // System.out.println("end of media " + trackNumber);
+            PPRButton.setText("Pause");
             timeSlider.setValue(0.0);
             atEndOfMedia = false;
             isPlaying = false;
             pauseTime = 0.0; // Update pause time.
         }
         if(isPlaying){
+            // System.out.println("playing " + trackNumber);
             PPRButton.setText("Play");
             mediaPlayer.pause();
             isPlaying = false;
             pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
         }
         else{
+            // System.out.println("paused " + trackNumber);
             mediaPlayer.seek(Duration.seconds(pauseTime));
             PPRButton.setText("Pause");
             mediaPlayer.play();

@@ -152,6 +152,9 @@ public class AudioTrackListeners {
             @Override
             public void run() {
                 audioTrack.PPRButton.setText("Restart");
+//                if(audioTrack.masterTrack.longestAudioTrack.trackNumber == audioTrack.trackNumber){
+//                    audioTrack.masterTrack.PPRButton.setText("Restart");
+//                }
                 audioTrack.atEndOfMedia = true;
                 if(!audioTrack.currentTimeLabel.textProperty().equals(audioTrack.totalTimeLabel.textProperty())){
                     audioTrack.currentTimeLabel.textProperty().unbind();
