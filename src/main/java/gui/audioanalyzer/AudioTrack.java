@@ -289,7 +289,6 @@ public class AudioTrack extends Track{
      * Focuses this audio track.
      */
     void focusTrack(){
-        masterTrack.switchButton.setDisable(false);
         for(AudioTrack track: masterTrack.audioTracks){
             if(masterTrack.synced){
                 Bindings.unbindBidirectional(masterTrack.volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
@@ -302,6 +301,7 @@ public class AudioTrack extends Track{
         if(masterTrack.synced){
             MasterTrackListeners.bindSliderValueProperties(masterTrack.volumeSlider, volumeSlider);
         }
+        masterTrack.setSwitchDisabled();
     }
 
     private void setTrackInFocus(AudioTrack track){
@@ -317,7 +317,6 @@ public class AudioTrack extends Track{
     }
 
     void undoFocus(){
-        masterTrack.switchButton.setDisable(true);
         focused = false;
         trackLabel.borderProperty().set(null);
         for(AudioTrack track: masterTrack.audioTracks){
@@ -329,6 +328,7 @@ public class AudioTrack extends Track{
                 track.volumeSlider.setValue(1.0);
             }
         }
+        masterTrack.setSwitchDisabled();
     }
 
     /**

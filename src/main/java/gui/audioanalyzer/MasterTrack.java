@@ -29,6 +29,8 @@ public class MasterTrack extends Track{
     Button syncButton;
     @FXML
     Button addTrackButton;
+    @FXML
+    Button debugReportButton;
 
     // Other data.
     boolean synced = false;
@@ -44,6 +46,7 @@ public class MasterTrack extends Track{
     EventHandler<ActionEvent> syncButtonOnActionEH;
     EventHandler<ActionEvent> addTrackButtonOnAction;
     EventHandler<ActionEvent> pprButtonOnActionEH;
+    EventHandler<ActionEvent> debugButtonOnActionEH;
 
     public MasterTrack(MasterTrackCoordinates masterTrackCoordinates, MainController controller){
         Track.controller = controller;
@@ -70,6 +73,7 @@ public class MasterTrack extends Track{
         syncButton = new Button();
         addTrackButton = new Button();
         lowerSeparator = new Separator();
+        debugReportButton = new Button();
     }
 
     void initializeJavaFXObjects(){
@@ -86,6 +90,7 @@ public class MasterTrack extends Track{
         initializeTrackObject(syncButton, getTrackCoordinates().syncButtonX, getTrackCoordinates().syncButtonY, PPR_BUTTON_WIDTH, PPR_BUTTON_HEIGHT);
         initializeTrackObject(addTrackButton, getTrackCoordinates().addTrackButtonX, getTrackCoordinates().addTrackButtonY, ADD_TRACK_BUTTON_WIDTH, ADD_TRACK_BUTTON_HEIGHT);
         initializeTrackObject(lowerSeparator, 0.0, MasterTrackCoordinates.MASTER_TRACK_SEPARATOR_Y_COORDINATE, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
+        initializeTrackObject(debugReportButton, getTrackCoordinates().addTrackButtonX - 100.0, getTrackCoordinates().addTrackButtonY, ADD_TRACK_BUTTON_WIDTH, ADD_TRACK_BUTTON_HEIGHT);
     }
 
     void setJavaFXObjectsDefaultProperties(){
@@ -105,6 +110,8 @@ public class MasterTrack extends Track{
         syncButton.setText("Sync");
         syncButton.setDisable(true);
         addTrackButton.setText("Add Track");
+        debugReportButton.setText("Debug");
+        debugReportButton.setVisible(false); // Set to true to debug.
     }
 
     @Override
@@ -115,6 +122,7 @@ public class MasterTrack extends Track{
         MasterTrackListeners.addTimeSliderOnDragDetectedEH(MasterTrack.this);
         MasterTrackListeners.addTimeSliderOnMouseReleasedEH(MasterTrack.this);
         MasterTrackListeners.addSwitchButtonOnMouseClickedEH(MasterTrack.this);
+        MasterTrackListeners.addDebugButtonOnMouseActionEH(MasterTrack.this);
     }
 
     MasterTrackCoordinates getTrackCoordinates(){
@@ -134,6 +142,7 @@ public class MasterTrack extends Track{
 
     void syncTrack(AudioTrack track){
         // Bind master currentTimeLabel to track if track is longest.
+        // System.out.println("In syncTrack(): track.trackNumber = " + track.trackNumber + ", longestAudioTrack.trackNumber = " + longestAudioTrack.trackNumber);
         if(track.trackNumber == longestAudioTrack.trackNumber){
             MasterTrackListeners.bindLabelTextProperties(currentTimeLabel, track.currentTimeLabel);
         }
@@ -216,12 +225,6 @@ public class MasterTrack extends Track{
             return;
         }
 
-        // Determine if the track to be removed is focused.
-        boolean trackFocused = false;
-        if(track.focused){
-            trackFocused = true;
-        }
-
         // If needed, unsync the track to prepare it for removal.
         if(synced){
             unSyncTrack(track);
@@ -240,18 +243,19 @@ public class MasterTrack extends Track{
 
         // Resync the longest track if needed.
         if(synced){
-            if(trackFocused){
-                // Resync volume sliders of remaining tracks.
-                for(AudioTrack audioTrack: audioTracks){
-                    MasterTrackListeners.bindSliderValueProperties(volumeSlider, audioTrack.volumeSlider);
-                }
-            }
-            else if(longestTrackRemoved){
+            if(longestTrackRemoved){
                 if(longestAudioTrack != null){
                     syncTrack(longestAudioTrack);
                 }
             }
         }
+        if(isSomeTrackFocused()){
+            refreshFocus();
+        }
+        else{
+            refreshUnFocus();
+        }
+        setSwitchDisabled();
     }
 
     private void removeFromAudioTracks(AudioTrack track){
@@ -399,7 +403,17 @@ public class MasterTrack extends Track{
 
     void refreshFocus(){
         for(AudioTrack track: audioTracks){
-            if(track.focused) track.focusTrack();
+            if(track.focused) {
+                track.focusTrack();
+            }
+        }
+    }
+
+    void refreshUnFocus(){
+        for(AudioTrack track: audioTracks){
+            if(!track.focused) {
+                track.undoFocus();
+            }
         }
     }
 
@@ -408,5 +422,30 @@ public class MasterTrack extends Track{
             if(track.focused) return track;
         }
         return null;
+    }
+
+    boolean onlyOneTrackHasFile(){
+        int tracksWithFiles = 0;
+        for(AudioTrack track: audioTracks){
+            if(track.trackHasFile()){
+                tracksWithFiles++;
+            }
+        }
+        return tracksWithFiles < 2;
+    }
+
+    void setSwitchDisabled(){
+        if(!isSomeTrackFocused()){
+            switchButton.setDisable(true);
+        }
+        else if(!someTrackHasFile()){
+            switchButton.setDisable(true);
+        }
+        else if(onlyOneTrackHasFile()){
+            switchButton.setDisable(true);
+        }
+        else{
+            switchButton.setDisable(false);
+        }
     }
 }

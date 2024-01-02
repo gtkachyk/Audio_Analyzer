@@ -69,6 +69,7 @@ public class MainController implements Initializable {
         anchorPaneChildren.add(track.switchButton);
         anchorPaneChildren.add(track.syncButton);
         anchorPaneChildren.add(track.addTrackButton);
+        anchorPaneChildren.add(track.debugReportButton);
     }
 
     /**

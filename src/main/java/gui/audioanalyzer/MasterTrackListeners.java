@@ -25,15 +25,33 @@ public class MasterTrackListeners {
         return new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+                if(!masterTrack.isSomeTrackFocused()) return;
+
                 AudioTrack focusedTrack = masterTrack.getFocusedTrack();
                 int focusedTrackNumber = focusedTrack.trackNumber;
                 int indexOfNextFocusTrack = focusedTrackNumber;
-                if(masterTrack.audioTracks.size() == focusedTrackNumber){
-                    masterTrack.audioTracks.get(0).focusTrack();
+
+                // Find the next track to focus.
+                boolean foundTrackToFocus = false;
+                while(!foundTrackToFocus){
+                    if(masterTrack.audioTracks.size() == indexOfNextFocusTrack){
+                        if(masterTrack.audioTracks.get(0).trackHasFile()){
+                            indexOfNextFocusTrack = 0;
+                            foundTrackToFocus = true;
+                        }
+                        else{
+                            indexOfNextFocusTrack = 1;
+                        }
+                    }
+                    else if(masterTrack.audioTracks.get(indexOfNextFocusTrack).trackHasFile()){
+                        foundTrackToFocus = true;
+                        masterTrack.audioTracks.get(indexOfNextFocusTrack).focusTrack();
+                    }
+                    else{
+                        indexOfNextFocusTrack++;
+                    }
                 }
-                else{
-                    masterTrack.audioTracks.get(indexOfNextFocusTrack).focusTrack();
-                }
+                masterTrack.audioTracks.get(indexOfNextFocusTrack).focusTrack();
             }
         };
     }
@@ -169,6 +187,18 @@ public class MasterTrackListeners {
         };
     }
 
+    private static EventHandler<ActionEvent> getDebugButtonOnActionEH(MasterTrack masterTrack){
+        return new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                for(AudioTrack track: masterTrack.audioTracks){
+                    System.out.println("Track " + track.trackNumber + ": " + "audioLabel = " + track.audioLabel.getText() + ", focused = " + track.focused);
+                }
+                System.out.println("");
+            }
+        };
+    }
+
     static void addTimeSliderChangeListener(MasterTrack masterTrack){
         ChangeListener<Number> newChangeListener = getTimeSliderChangeListener(masterTrack);
         masterTrack.timeSliderChangeListener = newChangeListener;
@@ -209,6 +239,12 @@ public class MasterTrackListeners {
         EventHandler<ActionEvent> newEventHandler = getPPRButtonOnActionEH(masterTrack);
         masterTrack.pprButtonOnActionEH = newEventHandler;
         masterTrack.PPRButton.setOnAction(newEventHandler);
+    }
+
+    static void addDebugButtonOnMouseActionEH(MasterTrack masterTrack){
+        EventHandler<ActionEvent> newEventHandler = getDebugButtonOnActionEH(masterTrack);
+        masterTrack.debugButtonOnActionEH = newEventHandler;
+        masterTrack.debugReportButton.setOnAction(newEventHandler);
     }
 
     /**
