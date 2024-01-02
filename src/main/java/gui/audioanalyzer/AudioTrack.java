@@ -41,6 +41,7 @@ public class AudioTrack extends Track{
     boolean isMuted = false;
     double pauseTime;
     boolean focused = false;
+    boolean synced = false;
     MasterTrack masterTrack; // The master track that controls this audio track.
 
     // JavaFX objects.

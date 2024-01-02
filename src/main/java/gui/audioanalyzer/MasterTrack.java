@@ -1,5 +1,6 @@
 package gui.audioanalyzer;
 
+import gui.audioanalyzer.exceptions.TrackRemoveException;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -160,6 +161,8 @@ public class MasterTrack extends Track{
         track.PPRButton.setDisable(true);
         track.timeSlider.setDisable(true);
         track.volumeSlider.setDisable(true);
+
+        track.synced = true;
     }
 
     /**
@@ -185,6 +188,8 @@ public class MasterTrack extends Track{
         track.PPRButton.setDisable(false);
         track.timeSlider.setDisable(false);
         track.volumeSlider.setDisable(false);
+
+        track.synced = false;
     }
 
     void refreshSync(){
@@ -194,7 +199,12 @@ public class MasterTrack extends Track{
 
     void removeAudioTrack(AudioTrack track){
         int removedTrackNumber = track.trackNumber;
-        removeAudioTrackBackendAdjust(track);
+        try{
+            removeAudioTrackBackendAdjust(track);
+        }
+        catch (TrackRemoveException e){
+            e.printStackTrace();
+        }
         removeAudioTrackGUIAdjust(track, removedTrackNumber);
     }
 
@@ -210,47 +220,31 @@ public class MasterTrack extends Track{
         refreshDisabledStatus();
     }
 
-    private void removeAudioTrackBackendAdjust(AudioTrack track){
-        // Special case where the track to remove has no file.
+    private void removeAudioTrackBackendAdjust(AudioTrack track) throws TrackRemoveException {
+        prepareTrackForRemoval(track);
+
+        // Special case: The track to remove has no file.
         if(!track.trackHasFile()){
-            removeFromAudioTracks(track);
+            removeEmptyTrack(track);
             return;
         }
 
-        // Special case where the last track is removed.
+        // Special case: The last track is removed.
         if(audioTracks.size() == 1){
-            if(PPRButton.getText().equals("Pause")) PPRButton.fire();
-            if(synced){
-                syncButton.fire();
-            }
-            removeFromAudioTracks(track);
+            removeLastTrack(track);
             return;
         }
 
-        // If needed, unsync the track to prepare it for removal.
-        if(synced){
-            unSyncTrack(track);
+        if(trackIsLongest(track)){
+            removeLongestTrack(track);
         }
-
-        // Stop the tracks media player.
-        track.mediaPlayer.stop();
-
-        // Determine if the track to remove is the longest track.
-        boolean longestTrackRemoved = false;
-        if(track.trackNumber == longestAudioTrack.trackNumber){
-            longestTrackRemoved = true;
+        else{
+            removeFromAudioTracks(track);
         }
+        refreshState();
+    }
 
-        removeFromAudioTracks(track);
-
-        // Resync the longest track if needed.
-        if(synced){
-            if(longestTrackRemoved){
-                if(longestAudioTrack != null){
-                    syncTrack(longestAudioTrack);
-                }
-            }
-        }
+    private void refreshState(){
         if(isSomeTrackFocused()){
             refreshFocus();
         }
@@ -258,6 +252,59 @@ public class MasterTrack extends Track{
             refreshUnFocus();
         }
         setSwitchDisabled();
+    }
+
+    /**
+     * Determines if a given track is the longest track.
+     * @param track The track to analyse.
+     * @return True if track is longest, false otherwise.
+     */
+    private boolean trackIsLongest(AudioTrack track){
+        if(track.trackNumber == longestAudioTrack.trackNumber) return true;
+        return false;
+    }
+
+    /**
+     * Prepares an AudioTrack to be removed from audioTracks.
+     * @param track The track to prepare.
+     */
+    private void prepareTrackForRemoval(AudioTrack track){
+        if(track.synced) unSyncTrack(track);
+        if(track.focused) track.undoFocus();
+        if(track.mediaPlayer != null) track.mediaPlayer.stop();
+    }
+
+    /**
+     * Removes an empty track from the back end.
+     * @param track The empty track to remove.
+     */
+    private void removeEmptyTrack(AudioTrack track) throws TrackRemoveException {
+        if(!canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove empty track");
+        removeFromAudioTracks(track);
+    }
+
+    /**
+     * Removes the only track from the backend.
+     * @param track The last track to remove.
+     */
+    private void removeLastTrack(AudioTrack track) throws TrackRemoveException {
+        if(!canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove empty track");
+        if(PPRButton.getText().equals("Pause")) PPRButton.fire();
+        if(synced){
+            syncButton.fire();
+        }
+        removeFromAudioTracks(track);
+    }
+
+    private void removeLongestTrack(AudioTrack track) throws TrackRemoveException {
+        if(!canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove longest track");
+        removeFromAudioTracks(track);
+
+        // Resync the longest track if needed.
+        // This is needed to rebind (unidirectional) the master track currentTimeLabel to the new longest track.
+        if(synced && longestAudioTrack != null){
+            MasterTrackListeners.bindLabelTextProperties(currentTimeLabel, longestAudioTrack.currentTimeLabel);
+        }
     }
 
     private void removeFromAudioTracks(AudioTrack track){
@@ -270,6 +317,10 @@ public class MasterTrack extends Track{
         refreshLongestAudioTrack();
 
         numberOfAudioTracks--;
+    }
+
+    private boolean canRemoveTrack(AudioTrack track){
+        return !track.synced && !track.focused;
     }
 
     private void refreshTrackNumbers(){
@@ -301,7 +352,7 @@ public class MasterTrack extends Track{
 
     void refreshLongestAudioTrack(){
         if(audioTracksSortedByDuration.size() > 0){
-            bubbleSortAudioTracksByDuration();
+            bubbleSortAudioTracksByDuration(audioTracksSortedByDuration);
             longestAudioTrack = audioTracksSortedByDuration.get(audioTracksSortedByDuration.size() - 1);
 
             // These properties don't need to be bound with formal bindings.
@@ -315,27 +366,26 @@ public class MasterTrack extends Track{
         }
     }
 
-    void bubbleSortAudioTracksByDuration(){
-        int n = audioTracksSortedByDuration.size();
+    void bubbleSortAudioTracksByDuration(ArrayList<AudioTrack> tracks){
+        int n = tracks.size();
         int i, j;
         AudioTrack temp;
         boolean swapped;
         for (i = 0; i < n - 1; i++) {
             swapped = false;
             for (j = 0; j < n - i - 1; j++) {
-                if(audioTracksSortedByDuration.get(j).mediaPlayer.getTotalDuration().toSeconds() > audioTracksSortedByDuration.get(j + 1).mediaPlayer.getTotalDuration().toSeconds()) {
+                if(tracks.get(j).mediaPlayer.getTotalDuration().toSeconds() > tracks.get(j + 1).mediaPlayer.getTotalDuration().toSeconds()) {
                     // Swap arr[j] and arr[j+1]
-                    temp = audioTracksSortedByDuration.get(j);
-                    audioTracksSortedByDuration.set(j, audioTracksSortedByDuration.get(j + 1));
-                    audioTracksSortedByDuration.set(j + 1, temp);
+                    temp = tracks.get(j);
+                    tracks.set(j, tracks.get(j + 1));
+                    tracks.set(j + 1, temp);
                     swapped = true;
                 }
             }
 
             // If no two elements were
             // swapped by inner loop, then break
-            if (!swapped)
-                break;
+            if (!swapped) break;
         }
     }
 
