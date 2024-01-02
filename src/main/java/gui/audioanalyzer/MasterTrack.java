@@ -100,7 +100,8 @@ public class MasterTrack extends Track{
         timeSlider.setDisable(true);
         currentTimeLabel.setText("00:00 / ");
         totalTimeLabel.setText("00:00");
-        switchButton.setText("Focus");
+        switchButton.setText("Switch");
+        switchButton.setDisable(true);
         syncButton.setText("Sync");
         syncButton.setDisable(true);
         addTrackButton.setText("Add Track");
@@ -113,6 +114,7 @@ public class MasterTrack extends Track{
         MasterTrackListeners.addPPRButtonOnActionEH(MasterTrack.this);
         MasterTrackListeners.addTimeSliderOnDragDetectedEH(MasterTrack.this);
         MasterTrackListeners.addTimeSliderOnMouseReleasedEH(MasterTrack.this);
+        MasterTrackListeners.addSwitchButtonOnMouseClickedEH(MasterTrack.this);
     }
 
     MasterTrackCoordinates getTrackCoordinates(){
@@ -399,5 +401,12 @@ public class MasterTrack extends Track{
         for(AudioTrack track: audioTracks){
             if(track.focused) track.focusTrack();
         }
+    }
+
+    AudioTrack getFocusedTrack(){
+        for(AudioTrack track: audioTracks){
+            if(track.focused) return track;
+        }
+        return null;
     }
 }

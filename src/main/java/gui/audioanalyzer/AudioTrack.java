@@ -289,6 +289,7 @@ public class AudioTrack extends Track{
      * Focuses this audio track.
      */
     void focusTrack(){
+        masterTrack.switchButton.setDisable(false);
         for(AudioTrack track: masterTrack.audioTracks){
             if(masterTrack.synced){
                 Bindings.unbindBidirectional(masterTrack.volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
@@ -316,6 +317,7 @@ public class AudioTrack extends Track{
     }
 
     void undoFocus(){
+        masterTrack.switchButton.setDisable(true);
         focused = false;
         trackLabel.borderProperty().set(null);
         for(AudioTrack track: masterTrack.audioTracks){

@@ -3,6 +3,7 @@ package gui.audioanalyzer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
@@ -24,15 +25,15 @@ public class MasterTrackListeners {
         return new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-//                String currentFocusTrack = masterTrack.getFocusTrack();
-//                if(currentFocusTrack.equals("None")){
-//                    for(AudioTrack track: masterTrack.audioTracks){
-//                        if(track.trackNumber == 1){
-//                            track.volumeSlider.setValue(1.0);
-//                            Bindings.unbindBidirectional(masterTrack.volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
-//                        }
-//                    }
-//                }
+                AudioTrack focusedTrack = masterTrack.getFocusedTrack();
+                int focusedTrackNumber = focusedTrack.trackNumber;
+                int indexOfNextFocusTrack = focusedTrackNumber;
+                if(masterTrack.audioTracks.size() == focusedTrackNumber){
+                    masterTrack.audioTracks.get(0).focusTrack();
+                }
+                else{
+                    masterTrack.audioTracks.get(indexOfNextFocusTrack).focusTrack();
+                }
             }
         };
     }
