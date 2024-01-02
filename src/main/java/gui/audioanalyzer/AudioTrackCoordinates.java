@@ -9,7 +9,7 @@ public class AudioTrackCoordinates extends TrackCoordinates{
     static final double TRACK_ONE_ROW_TWO_Y_COORDINATE = 221.0; // Only the PPR button.
     static final double TRACK_ONE_ROW_THREE_Y_COORDINATE = 225.0;
     static final double AUDIO_LABEL_X_COORDINATE = 92.0;
-    static final double REMOVE_TRACK_BUTTON_X_COORDINATE = 422.0; // Original value 400.0.
+    static final double REMOVE_TRACK_BUTTON_X_COORDINATE = 422.0; // Looks not close enough to side, but need to leave that room for the vertical scroll bar.
 
     // Other data.
     double upperSeparatorX;

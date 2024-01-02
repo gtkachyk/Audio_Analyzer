@@ -16,6 +16,7 @@ import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
@@ -30,7 +31,7 @@ import java.util.concurrent.Callable;
 public class AudioTrack extends Track{
 
     // Constants.
-    static final double REMOVE_TRACK_BUTTON_SIZE = 15.0; // The button is a square. Original value 26.6.
+    static final double REMOVE_TRACK_BUTTON_SIZE = 16.0; // The button is a square. Original value 15.0
 
     File audioFile;
     Media media;
@@ -113,13 +114,13 @@ public class AudioTrack extends Track{
         PPRButton.setDisable(true);
         PPRButton.setText("Play");
         timeSlider.setDisable(true);
-        removeTrackButton.setText("x");
+        removeTrackButton.setStyle("-fx-font-weight: bold; -fx-background-color: #e81123");
+        removeTrackButton.setText("X");
         removeTrackButton.setMinWidth(REMOVE_TRACK_BUTTON_SIZE);
         removeTrackButton.setMinHeight(REMOVE_TRACK_BUTTON_SIZE);
         removeTrackButton.setFont(new Font(removeTrackButton.getFont().getName(), removeTrackButton.getFont().getSize() - 5.0));
         removeTrackButton.textAlignmentProperty().set(TextAlignment.CENTER);
-        removeTrackButton.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
-        removeTrackButton.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+        removeTrackButton.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.FULL)));
         audioLabel.setText("Add file...");
     }
 
