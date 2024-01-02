@@ -332,37 +332,32 @@ public class MasterTrack extends Track {
         }
     }
 
-    private void refreshDisabledStatus(){
+    void refreshDisabledStatus(){
         if(someTrackHasFile()){
-            PPRButton.setDisable(false);
-            syncButton.setDisable(false);
-            timeSlider.setDisable(false);
+            setGUIActiveState();
         }
         else{
-            timeSliderSetDefaultState();
-            pprButtonSetDefaultState();
-            syncButtonSetDefaultState();
+            setGUIDefaultState();
             synced = false;
-            timeLabelSetDefaultState();
         }
     }
 
-    private void timeSliderSetDefaultState(){
+    void setGUIActiveState(){
+        PPRButton.setDisable(false);
+        syncButton.setDisable(false);
+        timeSlider.setDisable(false);
+        volumeSlider.setDisable(false);
+    }
+
+    void setGUIDefaultState(){
         timeSlider.setValue(0.0);
         timeSlider.setDisable(true);
-    }
-
-    private void pprButtonSetDefaultState(){
         PPRButton.setText("Play");
         PPRButton.setDisable(true);
-    }
-
-    private void syncButtonSetDefaultState(){
         syncButton.setText("Sync");
         syncButton.setDisable(true);
-    }
-
-    private void timeLabelSetDefaultState(){
+        volumeSlider.setValue(1.0);
+        volumeSlider.setDisable(true);
         currentTimeLabel.setText("00:00 /");
     }
 

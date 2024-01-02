@@ -6,17 +6,17 @@ import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
@@ -26,6 +26,7 @@ import javafx.util.Duration;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.concurrent.Callable;
 
 public class AudioTrack extends Track{
@@ -114,13 +115,15 @@ public class AudioTrack extends Track{
         PPRButton.setDisable(true);
         PPRButton.setText("Play");
         timeSlider.setDisable(true);
-        removeTrackButton.setStyle("-fx-font-weight: bold; -fx-background-color: #e81123");
-        removeTrackButton.setText("X");
         removeTrackButton.setMinWidth(REMOVE_TRACK_BUTTON_SIZE);
         removeTrackButton.setMinHeight(REMOVE_TRACK_BUTTON_SIZE);
-        removeTrackButton.setFont(new Font(removeTrackButton.getFont().getName(), removeTrackButton.getFont().getSize() - 5.0));
-        removeTrackButton.textAlignmentProperty().set(TextAlignment.CENTER);
-        removeTrackButton.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.FULL)));
+        removeTrackButton.setStyle("-fx-background-color: #e81123;");
+        Image imageRemove = new Image(new File("src/images/remove_track_button_image.png").toURI().toString());
+        ImageView ivRemove = new ImageView(imageRemove);
+        ivRemove.setFitHeight(7.0);
+        ivRemove.setFitWidth(7.0);
+        removeTrackButton.setGraphic(ivRemove);
+
         audioLabel.setText("Add file...");
     }
 
@@ -276,14 +279,25 @@ public class AudioTrack extends Track{
             masterTrack.timeSlider.setValue(0.0);
             masterTrack.syncButton.fire();
         }
+        else {
+            refreshDisabledStatus();
+        }
+        masterTrack.refreshDisabledStatus();
+    }
 
-        masterTrack.PPRButton.setDisable(false);
-        masterTrack.syncButton.setDisable(false);
-        masterTrack.timeSlider.setDisable(false);
-        if(!masterTrack.synced){
+    void refreshDisabledStatus(){
+        if(trackHasFile()){
             PPRButton.setDisable(false);
             timeSlider.setDisable(false);
             volumeSlider.setDisable(false);
+        }
+        else{
+            PPRButton.setText("Play");
+            PPRButton.setDisable(true);
+            timeSlider.setValue(0.0);
+            timeSlider.setDisable(true);
+            volumeSlider.setValue(1.0);
+            volumeSlider.setDisable(true);
         }
     }
 

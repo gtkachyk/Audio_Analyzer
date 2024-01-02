@@ -39,11 +39,11 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="vBox" focusTraversable="false"  prefHeight="382.0" prefWidth="444.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.audioanalyzer.MainController">
+<VBox fx:id="vBox" focusTraversable="false" prefHeight="382.0" prefWidth="444.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.audioanalyzer.MainController">
   <children>
     <MenuBar fx:id="mainMenuBar" focusTraversable="false" stylesheets="@menuStyles.css" VBox.vgrow="NEVER">
       <menus>
-        <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
+        <Menu fx:id="fileMenu" mnemonicParsing="false" text="Settings">
           <items>
             <MenuItem fx:id="menuItem" mnemonicParsing="false" onAction="#setMode" text="Dark Mode" />
           </items>

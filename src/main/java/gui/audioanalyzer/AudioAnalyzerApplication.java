@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import java.io.IOException;
+import java.net.URL;
 
 public class AudioAnalyzerApplication extends Application {
 
@@ -30,8 +31,8 @@ public class AudioAnalyzerApplication extends Application {
         // Make the width of the stage not resizable.
         stage.setMinWidth(SCENE_WIDTH + SCROLL_BAR_PADDING);
         stage.setMaxWidth(SCENE_WIDTH + SCROLL_BAR_PADDING);
-
         stage.setScene(scene);
+
         stage.show();
     }
 
