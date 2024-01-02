@@ -19,7 +19,7 @@ public class MasterTrack extends Track{
     private static final double ADD_TRACK_BUTTON_HEIGHT = 25.6;
     static final double MILLISECONDS_PER_SECOND = 1000.0;
     static final int MAX_TRACKS = 10;
-    private static final double TIME_SLIDER_DEFAULT_MAX = 100.0;
+    static final double TIME_SLIDER_DEFAULT_MAX = 100.0;
 
     // JavaFX objects.
     @FXML
@@ -128,9 +128,9 @@ public class MasterTrack extends Track{
         MasterTrackListeners.addDebugButtonOnMouseActionEH(MasterTrack.this);
     }
 
-    MasterTrackCoordinates getTrackCoordinates(){
-        return (MasterTrackCoordinates) trackCoordinates;
-    }
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Syncing Methods ----------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
 
     /**
      * Binds properties of this master track and all AudioTracks needed to synchronize them.
@@ -197,6 +197,10 @@ public class MasterTrack extends Track{
         sync();
     }
 
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Track Removal Methods ----------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
+
     void removeAudioTrack(AudioTrack track){
         int removedTrackNumber = track.trackNumber;
         try{
@@ -212,12 +216,13 @@ public class MasterTrack extends Track{
         controller.removeAudioTrack(track);
         shiftTracksUp(removedTrackNumber);
         controller.resizeStageForAudioTrackChange();
-        setSeparatorVisibilities();
+//        setSeparatorVisibilities();
+        TrackStateManager.setSeparatorVisibilities(audioTracks);
 
         if(numberOfAudioTracks < MAX_TRACKS){
             addTrackButton.setDisable(false);
         }
-        refreshDisabledStatus();
+        TrackStateManager.refreshDisabledStatus(MasterTrack.this);
     }
 
     private void removeAudioTrackBackendAdjust(AudioTrack track) throws TrackRemoveException {
@@ -241,27 +246,7 @@ public class MasterTrack extends Track{
         else{
             removeFromAudioTracks(track);
         }
-        refreshState();
-    }
-
-    private void refreshState(){
-        if(isSomeTrackFocused()){
-            refreshFocus();
-        }
-        else{
-            refreshUnFocus();
-        }
-        setSwitchDisabled();
-    }
-
-    /**
-     * Determines if a given track is the longest track.
-     * @param track The track to analyse.
-     * @return True if track is longest, false otherwise.
-     */
-    private boolean trackIsLongest(AudioTrack track){
-        if(track.trackNumber == longestAudioTrack.trackNumber) return true;
-        return false;
+        TrackStateManager.refreshState(MasterTrack.this);
     }
 
     /**
@@ -310,60 +295,52 @@ public class MasterTrack extends Track{
     private void removeFromAudioTracks(AudioTrack track){
         // Remove the track and update the track numbers.
         audioTracks.remove(track);
-        refreshTrackNumbers();
+        TrackStateManager.refreshTrackNumbers(MasterTrack.this);
 
         // Remove the track from the sorted list and update the longest track.
         audioTracksSortedByDuration.remove(track);
-        refreshLongestAudioTrack();
+        TrackStateManager.refreshLongestAudioTrack(MasterTrack.this);
 
         numberOfAudioTracks--;
     }
 
-    private boolean canRemoveTrack(AudioTrack track){
-        return !track.synced && !track.focused;
-    }
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Utility Methods ----------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
 
-    private void refreshTrackNumbers(){
-        for(int i = 0; i < audioTracks.size(); i++){
-            AudioTrack track = audioTracks.get(i);
-            track.trackNumber = i + 1;
-            track.trackLabel.setText("Track " + track.trackNumber);
+    AudioTrack getFocusedTrack(){
+        for(AudioTrack track: audioTracks){
+            if(track.focused) return track;
         }
+        return null;
     }
 
-    private void shiftTracksUp(int gap){
-        for(AudioTrack audioTrack: audioTracks){
-            if(audioTrack.trackNumber >= gap){
-                audioTrack.shiftTrackUp();
+    boolean onlyOneTrackHasFile(){
+        int tracksWithFiles = 0;
+        for(AudioTrack track: audioTracks){
+            if(track.trackHasFile()){
+                tracksWithFiles++;
             }
         }
+        return tracksWithFiles < 2;
     }
 
-    private void setSeparatorVisibilities(){
-        for(Track audioTrack: audioTracks){
-            if(audioTrack.trackNumber == audioTracks.size()){
-                audioTrack.lowerSeparator.setVisible(false);
-            }
-            else{
-                audioTrack.lowerSeparator.setVisible(true);
-            }
+    boolean isSomeTrackFocused(){
+        for(AudioTrack track: audioTracks){
+            if(track.focused) return true;
         }
+        return false;
     }
 
-    void refreshLongestAudioTrack(){
-        if(audioTracksSortedByDuration.size() > 0){
-            bubbleSortAudioTracksByDuration(audioTracksSortedByDuration);
-            longestAudioTrack = audioTracksSortedByDuration.get(audioTracksSortedByDuration.size() - 1);
-
-            // These properties don't need to be bound with formal bindings.
-            totalTimeLabel.setText(longestAudioTrack.totalTimeLabel.getText());
-            timeSlider.setMax(longestAudioTrack.timeSlider.getMax());
+    /**
+     * Determines if at least one track in audioTracks has a valid file associated with it.
+     * @return True if some track has a valid file, false otherwise.
+     */
+    boolean someTrackHasFile(){
+        for(AudioTrack track: audioTracks){
+            if(track.trackHasFile()) return true;
         }
-        else{
-            longestAudioTrack = null;
-            totalTimeLabel.setText("00:00");
-            timeSlider.setMax(TIME_SLIDER_DEFAULT_MAX);
-        }
+        return false;
     }
 
     void bubbleSortAudioTracksByDuration(ArrayList<AudioTrack> tracks){
@@ -389,56 +366,30 @@ public class MasterTrack extends Track{
         }
     }
 
+    private void shiftTracksUp(int gap){
+        for(AudioTrack audioTrack: audioTracks){
+            if(audioTrack.trackNumber >= gap){
+                audioTrack.shiftTrackUp();
+            }
+        }
+    }
+
+    private boolean canRemoveTrack(AudioTrack track){
+        return !track.synced && !track.focused;
+    }
+
     /**
-     * Determines if at least one track in audioTracks has a valid file associated with it.
-     * @return True if some track has a valid file, false otherwise.
+     * Determines if a given track is the longest track.
+     * @param track The track to analyse.
+     * @return True if track is longest, false otherwise.
      */
-    boolean someTrackHasFile(){
-        for(AudioTrack track: audioTracks){
-            if(track.trackHasFile()) return true;
-        }
+    private boolean trackIsLongest(AudioTrack track){
+        if(track.trackNumber == longestAudioTrack.trackNumber) return true;
         return false;
     }
 
-    void refreshDisabledStatus(){
-        if(someTrackHasFile()){
-            PPRButton.setDisable(false);
-            syncButton.setDisable(false);
-            timeSlider.setDisable(false);
-        }
-        else{
-            timeSliderSetDefaultState();
-            pprButtonSetDefaultState();
-            syncButtonSetDefaultState();
-            timeLabelSetDefaultState(currentTimeLabel);
-        }
-    }
-
-    void timeSliderSetDefaultState(){
-        timeSlider.setValue(0.0);
-        timeSlider.setDisable(true);
-    }
-
-    void pprButtonSetDefaultState(){
-        PPRButton.setText("Play");
-        PPRButton.setDisable(true);
-    }
-
-    void syncButtonSetDefaultState(){
-        syncButton.setText("Sync");
-        synced = false;
-        syncButton.setDisable(true);
-    }
-
-    void timeLabelSetDefaultState(Label timeLabel){
-        timeLabel.setText("00:00 /");
-    }
-
-    boolean isSomeTrackFocused(){
-        for(AudioTrack track: audioTracks){
-            if(track.focused) return true;
-        }
-        return false;
+    MasterTrackCoordinates getTrackCoordinates(){
+        return (MasterTrackCoordinates) trackCoordinates;
     }
 
     void printAudioTracksSortedByDuration(){
@@ -450,54 +401,6 @@ public class MasterTrack extends Track{
             else{
                 System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (" + track.mediaPlayer.getTotalDuration().toSeconds() + ")");
             }
-        }
-    }
-
-    void refreshFocus(){
-        for(AudioTrack track: audioTracks){
-            if(track.focused) {
-                track.focusTrack();
-            }
-        }
-    }
-
-    void refreshUnFocus(){
-        for(AudioTrack track: audioTracks){
-            if(!track.focused) {
-                track.undoFocus();
-            }
-        }
-    }
-
-    AudioTrack getFocusedTrack(){
-        for(AudioTrack track: audioTracks){
-            if(track.focused) return track;
-        }
-        return null;
-    }
-
-    boolean onlyOneTrackHasFile(){
-        int tracksWithFiles = 0;
-        for(AudioTrack track: audioTracks){
-            if(track.trackHasFile()){
-                tracksWithFiles++;
-            }
-        }
-        return tracksWithFiles < 2;
-    }
-
-    void setSwitchDisabled(){
-        if(!isSomeTrackFocused()){
-            switchButton.setDisable(true);
-        }
-        else if(!someTrackHasFile()){
-            switchButton.setDisable(true);
-        }
-        else if(onlyOneTrackHasFile()){
-            switchButton.setDisable(true);
-        }
-        else{
-            switchButton.setDisable(false);
         }
     }
 }

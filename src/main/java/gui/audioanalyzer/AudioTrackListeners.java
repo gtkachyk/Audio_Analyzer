@@ -96,14 +96,14 @@ public class AudioTrackListeners {
 
                 // Add audioTrack from masterTrack.audioTracksSortedByDuration.
                 audioTrack.masterTrack.audioTracksSortedByDuration.add(audioTrack);
-                audioTrack.masterTrack.refreshLongestAudioTrack();
+                TrackStateManager.refreshLongestAudioTrack(audioTrack.masterTrack);
 
                 // Refresh sync if needed.
                 if(audioTrack.masterTrack.synced){
                     audioTrack.masterTrack.refreshSync();
                 }
 
-                audioTrack.masterTrack.refreshFocus();
+                TrackStateManager.refreshFocus(audioTrack.masterTrack.audioTracks);
             }
         };
     }

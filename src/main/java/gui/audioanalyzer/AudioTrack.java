@@ -302,7 +302,7 @@ public class AudioTrack extends Track{
         if(masterTrack.synced){
             MasterTrackListeners.bindSliderValueProperties(masterTrack.volumeSlider, volumeSlider);
         }
-        masterTrack.setSwitchDisabled();
+        TrackStateManager.setSwitchDisabled(masterTrack);
     }
 
     private void setTrackInFocus(AudioTrack track){
@@ -334,7 +334,7 @@ public class AudioTrack extends Track{
                 track.volumeSlider.setValue(1.0);
             }
         }
-        masterTrack.setSwitchDisabled();
+        TrackStateManager.setSwitchDisabled(masterTrack);
     }
 
     /**
