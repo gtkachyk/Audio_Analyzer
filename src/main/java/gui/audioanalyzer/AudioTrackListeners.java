@@ -102,6 +102,8 @@ public class AudioTrackListeners {
                 if(audioTrack.masterTrack.synced){
                     audioTrack.masterTrack.refreshSync();
                 }
+
+                audioTrack.masterTrack.refreshFocus();
             }
         };
     }
@@ -228,6 +230,17 @@ public class AudioTrackListeners {
         };
     }
 
+    private static Runnable getMediaPlayerOnReadyR(AudioTrack audioTrack){
+        return new Runnable() {
+            @Override
+            public void run() {
+                if(audioTrack.masterTrack.synced && audioTrack.masterTrack.PPRButton.getText().equals("Pause")){
+                    audioTrack.pprOnAction();
+                }
+            }
+        };
+    }
+
     static void addPPRButtonOnActionEH(AudioTrack audioTrack){
         EventHandler<ActionEvent> newEventHandler = getPPRButtonOnActionEH(audioTrack);
         audioTrack.pprButtonOnActionEH = newEventHandler;
@@ -312,6 +325,14 @@ public class AudioTrackListeners {
         audioTrack.removeTrackButton.setOnMouseClicked(newEventHandler);
     }
 
+    static void addMediaPlayerOnReadyR(AudioTrack audioTrack){
+        Runnable newRunnable = getMediaPlayerOnReadyR(audioTrack);
+        audioTrack.mediaPlayerOnReadyR = newRunnable;
+        if(audioTrack.mediaPlayer != null){
+            audioTrack.mediaPlayer.setOnReady(newRunnable);
+        }
+    }
+
     /**
      * Stable listeners are those that are not connected to the parts of an audio track that are likely to change.
      * @param audioTrack
@@ -328,6 +349,7 @@ public class AudioTrackListeners {
         addMediaPlayerTotalDurationCL(audioTrack);
         addMediaPlayerCurrentTimeCL(audioTrack);
         addMediaPlayerOnEndOfMediaR(audioTrack);
+        addMediaPlayerOnReadyR(audioTrack);
         addTimeSliderValueChangingCL(audioTrack);
         addTimeSliderValueCL(audioTrack);
         addTimeSliderOnMouseClickedEH(audioTrack);
@@ -349,6 +371,7 @@ public class AudioTrackListeners {
             audioTrack.mediaPlayer.totalDurationProperty().removeListener(audioTrack.mediaPlayerTotalDurationCL);
             audioTrack.mediaPlayer.currentTimeProperty().removeListener(audioTrack.mediaPlayerCurrentTimeCL);
             audioTrack.mediaPlayer.onEndOfMediaProperty().set(null);
+            audioTrack.mediaPlayer.onReadyProperty().set(null);
         }
         audioTrack.timeSlider.valueChangingProperty().removeListener(audioTrack.timeSliderValueChangingCL);
         audioTrack.timeSlider.valueProperty().removeListener(audioTrack.timeSliderValueCL);

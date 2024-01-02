@@ -64,6 +64,7 @@ public class AudioTrack extends Track{
     EventHandler<MouseEvent> audioLabelOnMouseClickedEH;
     EventHandler<MouseEvent> trackLabelOnMouseClickedEH;
     EventHandler<MouseEvent> removeTrackButtonOnClickEH;
+    Runnable mediaPlayerOnReadyR;
 
     public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates, MasterTrack masterTrack){
         this.masterTrack = masterTrack;
@@ -102,10 +103,11 @@ public class AudioTrack extends Track{
     }
 
     void setJavaFXObjectsDefaultProperties(){
-        trackLabel.setText("Track " + this.trackNumber);
+        trackLabel.setText("Track " + trackNumber);
         lowerVolumeLabel.setText("-");
         volumeSlider.setMax(VOLUME_SLIDER_MAX);
         volumeSlider.setValue(volumeSlider.getMax());
+        volumeSlider.setDisable(true);
         raiseVolumeLabel.setText("+");
         PPRButton.setDisable(true);
         PPRButton.setText("Play");
@@ -121,9 +123,6 @@ public class AudioTrack extends Track{
     }
 
     void setStateAfterFileChange(){
-        if(focused){
-            undoFocus();
-        }
         atEndOfMedia = false;
         isPlaying = false;
         isMuted = false;
@@ -282,6 +281,7 @@ public class AudioTrack extends Track{
         if(!masterTrack.synced){
             PPRButton.setDisable(false);
             timeSlider.setDisable(false);
+            volumeSlider.setDisable(false);
         }
     }
 
@@ -289,16 +289,17 @@ public class AudioTrack extends Track{
      * Focuses this audio track.
      */
     void focusTrack(){
-        // TODO: Fix bug: focus track volume sliders not synced with master volume slider when synced, and not syncing after unfocused.
-        setTrackInFocus(AudioTrack.this);
         for(AudioTrack track: masterTrack.audioTracks){
-            if(track.trackNumber != trackNumber){
-                // Unbind the volume slider of all non-focused tracks.
-                if(masterTrack.synced){
-                    Bindings.unbindBidirectional(masterTrack.volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
-                }
-                setTrackOutOfFocus(track);
+            if(masterTrack.synced){
+                Bindings.unbindBidirectional(masterTrack.volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
+                Bindings.unbindBidirectional(track.volumeSlider.valueProperty(), masterTrack.volumeSlider.valueProperty());
             }
+            setTrackOutOfFocus(track);
+        }
+        setTrackInFocus(AudioTrack.this);
+        masterTrack.focusTrackLabel.setText("Focus Track: " + trackNumber);
+        if(masterTrack.synced){
+            MasterTrackListeners.bindSliderValueProperties(masterTrack.volumeSlider, volumeSlider);
         }
     }
 
@@ -320,8 +321,8 @@ public class AudioTrack extends Track{
         for(AudioTrack track: masterTrack.audioTracks){
             if(track.trackNumber != trackNumber){
                 // Bind the volume slider of all non-focused tracks.
-                if(masterTrack.synced){
-                    masterTrack.bindSliderValueProperties(track.volumeSlider, masterTrack.volumeSlider);
+                if(masterTrack.synced && track.trackHasFile()){
+                    MasterTrackListeners.bindSliderValueProperties(track.volumeSlider, masterTrack.volumeSlider);
                 }
                 track.volumeSlider.setValue(1.0);
             }

@@ -90,7 +90,7 @@ public class MasterTrack extends Track{
 
     void setJavaFXObjectsDefaultProperties(){
         trackLabel.setText("Master");
-        focusTrackLabel.setText("Focus Track: " + getFocusTrack());
+        focusTrackLabel.setText("Focus Track: None");
         lowerVolumeLabel.setText("-");
         volumeSlider.setMax(VOLUME_SLIDER_MAX);
         volumeSlider.setValue(volumeSlider.getMax());
@@ -108,7 +108,6 @@ public class MasterTrack extends Track{
 
     @Override
     void initializeTrack() {
-        // Add listeners.
         MasterTrackListeners.addSyncButtonOnActionEH(MasterTrack.this);
         MasterTrackListeners.addAddTrackButtonOnAction(MasterTrack.this);
         MasterTrackListeners.addPPRButtonOnActionEH(MasterTrack.this);
@@ -118,25 +117,6 @@ public class MasterTrack extends Track{
 
     MasterTrackCoordinates getTrackCoordinates(){
         return (MasterTrackCoordinates) trackCoordinates;
-    }
-
-    /**
-     * Binds the valueProperty of two sliders to each other. Binding is unidirectional.
-     * @param sliderOne The first slider to bind.
-     * @param sliderTwo The second slider to bind.
-     */
-    public void bindSliderValueProperties(Slider sliderOne, Slider sliderTwo) {
-        // Has to be bidirectional, otherwise the master time slider won't scroll automatically when played.
-        sliderTwo.valueProperty().bindBidirectional(sliderOne.valueProperty());
-    }
-
-    /**
-     * Binds the textProperty of labelOne to labelTwo. Binding is unidirectional.
-     * @param labelOne The label whose textProperty will be bound to labelTwo.
-     * @param labelTwo The label whose textProperty will not be bound.
-     */
-    public void bindLabelTextProperties(Label labelOne, Label labelTwo){
-        labelOne.textProperty().bind(labelTwo.textProperty());
     }
 
     /**
@@ -153,15 +133,15 @@ public class MasterTrack extends Track{
     void syncTrack(AudioTrack track){
         // Bind master currentTimeLabel to track if track is longest.
         if(track.trackNumber == longestAudioTrack.trackNumber){
-            bindLabelTextProperties(currentTimeLabel, track.currentTimeLabel);
+            MasterTrackListeners.bindLabelTextProperties(currentTimeLabel, track.currentTimeLabel);
         }
 
         // Update pause time so newly synced tracks snap to the master track time slider before playing for the first time.
         track.pauseTime = timeSlider.getValue();
 
         // Bind slider values to master slider values.
-        bindSliderValueProperties(timeSlider, track.timeSlider);
-        bindSliderValueProperties(volumeSlider, track.volumeSlider);
+        MasterTrackListeners.bindSliderValueProperties(timeSlider, track.timeSlider);
+        MasterTrackListeners.bindSliderValueProperties(volumeSlider, track.volumeSlider);
 
         // Disable redundant buttons.
         track.PPRButton.setDisable(true);
@@ -197,27 +177,6 @@ public class MasterTrack extends Track{
     void refreshSync(){
         unSync();
         sync();
-    }
-
-    /**
-     * Determines if any audio track is focused.
-     * @return The focused track if one exists, 0 otherwise.
-     */
-    String getFocusTrack(){
-        int notMutedTracks = 0;
-        int lastNotMutedTrack = 0;
-        for(AudioTrack track: audioTracks){
-            if(track.volumeSlider.getValue() == 0.0){
-                notMutedTracks++;
-                lastNotMutedTrack = track.trackNumber;
-            }
-        }
-        if(notMutedTracks == 1){
-            return String.valueOf(lastNotMutedTrack);
-        }
-        else{
-            return "None";
-        }
     }
 
     void removeAudioTrack(AudioTrack track){
@@ -282,7 +241,7 @@ public class MasterTrack extends Track{
             if(trackFocused){
                 // Resync volume sliders of remaining tracks.
                 for(AudioTrack audioTrack: audioTracks){
-                    bindSliderValueProperties(volumeSlider, audioTrack.volumeSlider);
+                    MasterTrackListeners.bindSliderValueProperties(volumeSlider, audioTrack.volumeSlider);
                 }
             }
             else if(longestTrackRemoved){
@@ -372,6 +331,10 @@ public class MasterTrack extends Track{
         }
     }
 
+    /**
+     * Determines if at least one track in audioTracks has a valid file associated with it.
+     * @return True if some track has a valid file, false otherwise.
+     */
     boolean someTrackHasFile(){
         for(AudioTrack track: audioTracks){
             if(track.trackHasFile()) return true;
@@ -413,6 +376,13 @@ public class MasterTrack extends Track{
         timeLabel.setText("00:00 /");
     }
 
+    boolean isSomeTrackFocused(){
+        for(AudioTrack track: audioTracks){
+            if(track.focused) return true;
+        }
+        return false;
+    }
+
     void printAudioTracksSortedByDuration(){
         for(int i = 0; i < audioTracksSortedByDuration.size(); i++){
             AudioTrack track = audioTracksSortedByDuration.get(i);
@@ -422,6 +392,12 @@ public class MasterTrack extends Track{
             else{
                 System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (" + track.mediaPlayer.getTotalDuration().toSeconds() + ")");
             }
+        }
+    }
+
+    void refreshFocus(){
+        for(AudioTrack track: audioTracks){
+            if(track.focused) track.focusTrack();
         }
     }
 }
