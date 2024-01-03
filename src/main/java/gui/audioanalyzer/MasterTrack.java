@@ -234,7 +234,7 @@ public class MasterTrack extends Track {
             return;
         }
 
-        if(trackIsLongest(track)){
+        if(TrackUtilities.trackEquals(track, longestAudioTrack)){
             removeLongestTrack(track);
         }
         else{
@@ -258,7 +258,7 @@ public class MasterTrack extends Track {
      * @param track The empty track to remove.
      */
     private void removeEmptyTrack(AudioTrack track) throws TrackRemoveException {
-        if(!canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove empty track");
+        if(!TrackUtilities.canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove empty track");
         removeFromAudioTracks(track);
     }
 
@@ -267,7 +267,7 @@ public class MasterTrack extends Track {
      * @param track The last track to remove.
      */
     private void removeLastTrack(AudioTrack track) throws TrackRemoveException {
-        if(!canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove empty track");
+        if(!TrackUtilities.canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove empty track");
         if(PPRButton.getText().equals("Pause")) PPRButton.fire();
         if(synced){
             syncButton.fire();
@@ -276,7 +276,7 @@ public class MasterTrack extends Track {
     }
 
     private void removeLongestTrack(AudioTrack track) throws TrackRemoveException {
-        if(!canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove longest track");
+        if(!TrackUtilities.canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove longest track");
         removeFromAudioTracks(track);
 
         // Resync the longest track if needed.
@@ -312,7 +312,7 @@ public class MasterTrack extends Track {
 
     void refreshLongestAudioTrack(){
         if(audioTracksSortedByDuration.size() > 0){
-            bubbleSortAudioTracksByDuration(audioTracksSortedByDuration);
+            TrackUtilities.sortAudioTracksByDuration(audioTracksSortedByDuration);
             longestAudioTrack = audioTracksSortedByDuration.get(audioTracksSortedByDuration.size() - 1);
 
             // These properties don't need to be bound with formal bindings.
@@ -343,7 +343,7 @@ public class MasterTrack extends Track {
 //                PPRButton.setDisable(false);
 //            }
 //        }
-        if(someTrackHasFile()){
+        if(TrackUtilities.someTrackHasFile(audioTracks)){
             setGUIActiveState();
         }
         else{
@@ -388,13 +388,13 @@ public class MasterTrack extends Track {
     }
 
     void setSwitchDisabled(){
-        if(!isSomeTrackFocused()){
+        if(!TrackUtilities.isSomeTrackFocused(audioTracks)){
             switchButton.setDisable(true);
         }
-        else if(!someTrackHasFile()){
+        else if(!TrackUtilities.someTrackHasFile(audioTracks)){
             switchButton.setDisable(true);
         }
-        else if(onlyOneTrackHasFile()){
+        else if(TrackUtilities.onlyOneTrackHasFile(audioTracks)){
             switchButton.setDisable(true);
         }
         else{
@@ -414,7 +414,7 @@ public class MasterTrack extends Track {
     }
 
    private void refreshState(){
-        if(isSomeTrackFocused()){
+        if(TrackUtilities.isSomeTrackFocused(audioTracks)){
             refreshFocus();
         }
         else{
@@ -427,64 +427,6 @@ public class MasterTrack extends Track {
     // --------------------------------------------- Utility Methods ----------------------------------------------
     // ------------------------------------------------------------------------------------------------------------
 
-    AudioTrack getFocusedTrack(){
-        for(AudioTrack track: audioTracks){
-            if(track.focused) return track;
-        }
-        return null;
-    }
-
-    private boolean onlyOneTrackHasFile(){
-        int tracksWithFiles = 0;
-        for(AudioTrack track: audioTracks){
-            if(track.trackHasFile()){
-                tracksWithFiles++;
-            }
-        }
-        return tracksWithFiles < 2;
-    }
-
-    boolean isSomeTrackFocused(){
-        for(AudioTrack track: audioTracks){
-            if(track.focused) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Determines if at least one track in audioTracks has a valid file associated with it.
-     * @return True if some track has a valid file, false otherwise.
-     */
-    private boolean someTrackHasFile(){
-        for(AudioTrack track: audioTracks){
-            if(track.trackHasFile()) return true;
-        }
-        return false;
-    }
-
-    private void bubbleSortAudioTracksByDuration(ArrayList<AudioTrack> tracks){
-        int n = tracks.size();
-        int i, j;
-        AudioTrack temp;
-        boolean swapped;
-        for (i = 0; i < n - 1; i++) {
-            swapped = false;
-            for (j = 0; j < n - i - 1; j++) {
-                if(tracks.get(j).mediaPlayer.getTotalDuration().toSeconds() > tracks.get(j + 1).mediaPlayer.getTotalDuration().toSeconds()) {
-                    // Swap arr[j] and arr[j+1]
-                    temp = tracks.get(j);
-                    tracks.set(j, tracks.get(j + 1));
-                    tracks.set(j + 1, temp);
-                    swapped = true;
-                }
-            }
-
-            // If no two elements were
-            // swapped by inner loop, then break
-            if (!swapped) break;
-        }
-    }
-
     private void shiftTracksUp(int gap){
         for(AudioTrack audioTrack: audioTracks){
             if(audioTrack.trackNumber >= gap){
@@ -493,33 +435,8 @@ public class MasterTrack extends Track {
         }
     }
 
-    private boolean canRemoveTrack(AudioTrack track){
-        return !track.synced && !track.focused;
-    }
-
-    /**
-     * Determines if a given track is the longest track.
-     * @param track The track to analyse.
-     * @return True if track is longest, false otherwise.
-     */
-    private boolean trackIsLongest(AudioTrack track){
-        if(track.trackNumber == longestAudioTrack.trackNumber) return true;
-        return false;
-    }
-
     MasterTrackCoordinates getTrackCoordinates(){
         return (MasterTrackCoordinates) trackCoordinates;
-    }
-
-    // TODO: Put utility methods into a different class.
-    int emptyTracks(){
-        int emptyTracks = 0;
-        for(AudioTrack track: audioTracks){
-            if(!track.trackHasFile()){
-                emptyTracks++;
-            }
-        }
-        return emptyTracks;
     }
 
     void refreshPPRText(){
@@ -540,7 +457,7 @@ public class MasterTrack extends Track {
                     }
                 }
             }
-            int nonEmptyTracks = audioTracks.size() - emptyTracks();
+            int nonEmptyTracks = audioTracks.size() - TrackUtilities.emptyTracks(audioTracks);
             if(finishedTracks == nonEmptyTracks){
                 PPRButton.setText("Restart");
             }
@@ -552,18 +469,6 @@ public class MasterTrack extends Track {
             }
             else{
                 PPRButton.setText("Press All");
-            }
-        }
-    }
-
-    void printAudioTracksSortedByDuration(){
-        for(int i = 0; i < audioTracksSortedByDuration.size(); i++){
-            AudioTrack track = audioTracksSortedByDuration.get(i);
-            if(track.mediaPlayer == null){
-                System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (null)");
-            }
-            else{
-                System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (" + track.mediaPlayer.getTotalDuration().toSeconds() + ")");
             }
         }
     }

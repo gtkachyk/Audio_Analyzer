@@ -27,9 +27,9 @@ public class MasterTrackListeners {
         return new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                if(!masterTrack.isSomeTrackFocused()) return;
+                if(!TrackUtilities.isSomeTrackFocused(masterTrack.audioTracks)) return;
 
-                AudioTrack focusedTrack = masterTrack.getFocusedTrack();
+                AudioTrack focusedTrack = TrackUtilities.getFocusedTrack(masterTrack.audioTracks);
                 int focusedTrackNumber = focusedTrack.trackNumber;
                 int indexOfNextFocusTrack = focusedTrackNumber;
 
