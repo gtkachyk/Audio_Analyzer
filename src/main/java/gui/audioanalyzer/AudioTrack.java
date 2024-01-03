@@ -6,15 +6,11 @@ import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
-import javafx.scene.control.Slider;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.media.Media;
+import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
@@ -153,20 +149,6 @@ public class AudioTrack extends Track{
         }
     }
 
-    private void setAudioLabelText(){
-        if(audioFile == null){
-            audioLabel.setText("Add file...");
-        }
-        else{
-            if(audioFile.getName().length() < 25){
-                audioLabel.setText(audioFile.getName());
-            }
-            else{
-                audioLabel.setText(audioFile.getName().substring(0, 24) + "...");
-            }
-        }
-    }
-
     public void bindCurrentTimeLabel(){
         currentTimeLabel.textProperty().bind(Bindings.createStringBinding(new Callable<String>() {
             @Override
@@ -201,29 +183,24 @@ public class AudioTrack extends Track{
         }
         atEndOfMedia = true;
         PPRButton.setText("Restart");
-
-//        if(!masterTrack.synced){
-//            int finishedTracks = 1;
-//            for(AudioTrack track: masterTrack.audioTracks){
-//                if(track.trackNumber != trackNumber && track.trackHasFile()){
-//                    if(track.PPRButton.getText().equals("Restart")) finishedTracks++;
-//                }
-//            }
-//            if(finishedTracks == (masterTrack.audioTracks.size() - masterTrack.emptyTracks())){
-//                masterTrack.PPRButton.setText("Restart");
-//            }
-//        }
     }
 
     AudioTrackCoordinates getTrackCoordinates(){
         return (AudioTrackCoordinates) trackCoordinates;
     }
 
-    private void setTrackAudio(File audioFile){
+    private boolean setTrackAudio(File audioFile){
         this.audioFile = audioFile;
-        media = new Media(this.audioFile.toURI().toString());
-        mediaPlayer = new MediaPlayer(media);
-        audioLabel.setText(audioFile.getName());
+        try{
+            media = new Media(this.audioFile.toURI().toString());
+            mediaPlayer = new MediaPlayer(media);
+            audioLabel.setText(audioFile.getName());
+            return true;
+        }
+        catch(MediaException e){
+            controller.createAlert(new Alert(Alert.AlertType.ERROR, "Unsupported file type selected.", ButtonType.OK), "Error").showAndWait();
+            return false;
+        }
     }
 
     private File getNewAudioFile(){
@@ -235,14 +212,15 @@ public class AudioTrack extends Track{
     }
 
     private void addNewAudioFile(File newFile){
-        setTrackAudio(newFile);
+        boolean setAudioStatus = setTrackAudio(newFile);
+        if(setAudioStatus){
+            // Bidirectionally bind volume slider value to volume property of media player.
+            mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
+            bindCurrentTimeLabel();
 
-        // Bidirectionally bind volume slider value to volume property of media player.
-        mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
-        bindCurrentTimeLabel();
-
-        // Add listeners.
-        AudioTrackListeners.addUnstableListeners(AudioTrack.this);
+            // Add listeners.
+            AudioTrackListeners.addUnstableListeners(AudioTrack.this);
+        }
     }
 
     private void changeAudioFile(File newFile){
@@ -391,32 +369,5 @@ public class AudioTrack extends Track{
 
     boolean trackHasFile(){
         return (audioFile != null) && (media != null) && (mediaPlayer != null);
-    }
-
-    void pprOnAction(){
-        if(!trackHasFile()) return;
-        bindCurrentTimeLabel();
-        if(atEndOfMedia){
-            // System.out.println("end of media " + trackNumber);
-            PPRButton.setText("Pause");
-            timeSlider.setValue(0.0);
-            atEndOfMedia = false;
-            isPlaying = false;
-            pauseTime = 0.0; // Update pause time.
-        }
-        if(isPlaying){
-            // System.out.println("playing " + trackNumber);
-            PPRButton.setText("Play");
-            mediaPlayer.pause();
-            isPlaying = false;
-            pauseTime = mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-        }
-        else{
-            // System.out.println("paused " + trackNumber);
-            mediaPlayer.seek(Duration.seconds(pauseTime));
-            PPRButton.setText("Pause");
-            mediaPlayer.play();
-            isPlaying = true;
-        }
     }
 }

@@ -240,7 +240,7 @@ public class MasterTrack extends Track {
         else{
             removeFromAudioTracks(track);
         }
-        refreshState();
+        refreshFocusState();
     }
 
     /**
@@ -327,22 +327,6 @@ public class MasterTrack extends Track {
     }
 
     void refreshDisabledStatus(){
-//        if(!someTrackHasFile()){
-//            if(synced){
-//                syncButton.setDisable(false);
-//                syncButton.fire();
-//            }
-//            setGUIDefaultState();
-//        }
-//        else{
-//            if(synced){
-//                setGUIActiveState();
-//            }
-//            else{
-//                setGUIDefaultState();
-//                PPRButton.setDisable(false);
-//            }
-//        }
         if(TrackUtilities.someTrackHasFile(audioTracks)){
             setGUIActiveState();
         }
@@ -413,7 +397,7 @@ public class MasterTrack extends Track {
         }
     }
 
-   private void refreshState(){
+   private void refreshFocusState(){
         if(TrackUtilities.isSomeTrackFocused(audioTracks)){
             refreshFocus();
         }
@@ -421,22 +405,6 @@ public class MasterTrack extends Track {
             refreshUnFocus();
         }
         setSwitchDisabled();
-    }
-
-    // ------------------------------------------------------------------------------------------------------------
-    // --------------------------------------------- Utility Methods ----------------------------------------------
-    // ------------------------------------------------------------------------------------------------------------
-
-    private void shiftTracksUp(int gap){
-        for(AudioTrack audioTrack: audioTracks){
-            if(audioTrack.trackNumber >= gap){
-                audioTrack.shiftTrackUp();
-            }
-        }
-    }
-
-    MasterTrackCoordinates getTrackCoordinates(){
-        return (MasterTrackCoordinates) trackCoordinates;
     }
 
     void refreshPPRText(){
@@ -472,4 +440,21 @@ public class MasterTrack extends Track {
             }
         }
     }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Utility Methods ----------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
+
+    private void shiftTracksUp(int gap){
+        for(AudioTrack audioTrack: audioTracks){
+            if(audioTrack.trackNumber >= gap){
+                audioTrack.shiftTrackUp();
+            }
+        }
+    }
+
+    MasterTrackCoordinates getTrackCoordinates(){
+        return (MasterTrackCoordinates) trackCoordinates;
+    }
+
 }

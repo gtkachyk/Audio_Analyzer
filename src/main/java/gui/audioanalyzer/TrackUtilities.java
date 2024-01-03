@@ -1,5 +1,7 @@
 package gui.audioanalyzer;
 
+import javafx.scene.control.Button;
+
 import java.util.ArrayList;
 
 /**
@@ -98,6 +100,17 @@ public class TrackUtilities {
             else{
                 System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (" + track.mediaPlayer.getTotalDuration().toSeconds() + ")");
             }
+        }
+    }
+
+    static void forceFire(Button button){
+        if(button.isDisable()){
+            button.setDisable(false);
+            button.fire();
+            button.setDisable(true);
+        }
+        else{
+            button.fire();
         }
     }
 }

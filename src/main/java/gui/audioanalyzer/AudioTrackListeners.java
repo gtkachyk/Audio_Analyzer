@@ -15,7 +15,30 @@ public class AudioTrackListeners {
         return new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                audioTrack.pprOnAction();
+                if(!audioTrack.trackHasFile()) return;
+                audioTrack.bindCurrentTimeLabel();
+                if(audioTrack.atEndOfMedia){
+                    // System.out.println("end of media " + trackNumber);
+                    audioTrack.PPRButton.setText("Pause");
+                    audioTrack.timeSlider.setValue(0.0);
+                    audioTrack.atEndOfMedia = false;
+                    audioTrack.isPlaying = false;
+                    audioTrack.pauseTime = 0.0; // Update pause time.
+                }
+                if(audioTrack.isPlaying){
+                    // System.out.println("playing " + trackNumber);
+                    audioTrack.PPRButton.setText("Play");
+                    audioTrack.mediaPlayer.pause();
+                    audioTrack.isPlaying = false;
+                    audioTrack.pauseTime = audioTrack.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+                }
+                else{
+                    // System.out.println("paused " + trackNumber);
+                    audioTrack.mediaPlayer.seek(Duration.seconds(audioTrack.pauseTime));
+                    audioTrack.PPRButton.setText("Pause");
+                    audioTrack.mediaPlayer.play();
+                    audioTrack.isPlaying = true;
+                }
             }
         };
     }
@@ -240,7 +263,7 @@ public class AudioTrackListeners {
             @Override
             public void run() {
                 if(audioTrack.masterTrack.synced && audioTrack.masterTrack.PPRButton.getText().equals("Pause")){
-                    audioTrack.pprOnAction();
+                    TrackUtilities.forceFire(audioTrack.PPRButton);
                 }
             }
         };

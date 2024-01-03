@@ -1,17 +1,18 @@
 package gui.audioanalyzer;
 
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollBar;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import java.net.URL;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -204,5 +205,30 @@ public class MainController implements Initializable {
                 corner.setStyle(style);
             }
         }
+    }
+
+    /**
+     * Formats an Alert with predefined properties. The alert will have custom header text.
+     * @param alert the alert to format.
+     * @param headerText the header text to add to alert.
+     * @return alert with updated properties.
+     */
+    Alert createAlert(Alert alert, String headerText){
+        // Prevent closing with any key.
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                keyEvent.consume();
+            }
+        });
+
+        alert.setHeaderText(headerText);
+        alert.setResizable(true);
+        alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        alert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Scene scene = alert.getDialogPane().getScene();
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("alertStyles.css")).toExternalForm());
+        return alert;
     }
 }

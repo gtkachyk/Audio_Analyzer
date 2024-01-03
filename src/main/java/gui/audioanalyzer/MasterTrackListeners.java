@@ -167,10 +167,7 @@ public class MasterTrackListeners {
                     for(AudioTrack track: masterTrack.audioTracks){
                         if(track.trackHasFile() && track.isPlaying){
                             // Pause all playing tracks.
-                            track.pprOnAction();
-//                            if(track.atEndOfMedia){
-//                                track.pprOnAction();
-//                            }
+                            TrackUtilities.forceFire(track.PPRButton);
                         }
                     }
                     masterTrack.PPRButton.setText("Play");
@@ -179,7 +176,7 @@ public class MasterTrackListeners {
                     for(AudioTrack track: masterTrack.audioTracks){
                         if(track.trackHasFile() && !track.isPlaying){
                             // Play all paused tracks.
-                            track.pprOnAction();
+                            TrackUtilities.forceFire(track.PPRButton);
                         }
                     }
                     masterTrack.PPRButton.setText("Pause");
