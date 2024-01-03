@@ -58,12 +58,6 @@ public class ManualTests {
      * Drag master time slider to end.
      * Press master track PPR.
      */
-    // TODO: Fix bug:
-    //  press sync
-    //  press master ppr (or don't)
-    //  focus track 4
-    //  remove track 4
-    //  focus track 1: track 2 is not muted and all volume slider are still synced.
     static void setStateThree(MasterTrack masterTrack){
         addNewTracks(masterTrack, 4);
         addTestFileToTrack(masterTrack, 2, 1);

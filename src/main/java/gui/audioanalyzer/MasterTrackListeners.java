@@ -111,6 +111,8 @@ public class MasterTrackListeners {
 //                    masterTrack.refreshDisabledStatus();
                 }
 
+                masterTrack.refreshPPRText();
+
                 // Refocus focused track if one exists.
                 for(AudioTrack track: masterTrack.audioTracks){
                     if(track.focused){

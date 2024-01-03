@@ -413,36 +413,34 @@ public class MasterTrack extends Track {
     }
 
     void refreshPPRText(){
-        if(!synced){
-            int finishedTracks = 0;
-            int playingTracks = 0;
-            int pausedTracks = 0;
-            for(AudioTrack track: audioTracks){
-                if(track.trackHasFile()){
-                    if(track.PPRButton.getText().equals("Play")){
-                        pausedTracks++;
-                    }
-                    else if(track.PPRButton.getText().equals("Restart")){
-                        finishedTracks++;
-                    }
-                    else{
-                        playingTracks++;
-                    }
+        int finishedTracks = 0;
+        int playingTracks = 0;
+        int pausedTracks = 0;
+        for(AudioTrack track: audioTracks){
+            if(track.trackHasFile()){
+                if(track.PPRButton.getText().equals("Play")){
+                    pausedTracks++;
+                }
+                else if(track.PPRButton.getText().equals("Restart")){
+                    finishedTracks++;
+                }
+                else{
+                    playingTracks++;
                 }
             }
-            int nonEmptyTracks = audioTracks.size() - TrackUtilities.emptyTracks(audioTracks);
-            if(finishedTracks == nonEmptyTracks){
-                PPRButton.setText("Restart");
-            }
-            else if(playingTracks == nonEmptyTracks){
-                PPRButton.setText("Pause");
-            }
-            else if(pausedTracks == nonEmptyTracks){
-                PPRButton.setText("Play");
-            }
-            else{
-                PPRButton.setText("Press All");
-            }
+        }
+        int nonEmptyTracks = audioTracks.size() - TrackUtilities.emptyTracks(audioTracks);
+        if(finishedTracks == nonEmptyTracks){
+            PPRButton.setText("Restart");
+        }
+        else if(playingTracks == nonEmptyTracks){
+            PPRButton.setText("Pause");
+        }
+        else if(pausedTracks == nonEmptyTracks){
+            PPRButton.setText("Play");
+        }
+        else{
+            PPRButton.setText("Press All");
         }
     }
 
