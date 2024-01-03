@@ -130,7 +130,7 @@ public class MasterTrackListeners {
                     masterTrack.addTrackButton.setDisable(true);
                 }
                 AudioTrack audioTrack = new AudioTrack(masterTrack.numberOfAudioTracks, new AudioTrackCoordinates(masterTrack.numberOfAudioTracks), masterTrack);
-                masterTrack.controller.showAudioTrack(audioTrack);
+                Track.controller.showAudioTrack(audioTrack);
                 masterTrack.audioTracks.add(audioTrack);
 
                 // Disable buttons and slider of new track because it has no file to play.
@@ -140,7 +140,7 @@ public class MasterTrackListeners {
                     audioTrack.volumeSlider.setDisable(true);
                 }
 
-                masterTrack.controller.resizeStageForAudioTrackChange();
+                Track.controller.resizeStageForAudioTrackChange();
 
                 for(Track track: masterTrack.audioTracks){
                     if(track.trackNumber == masterTrack.audioTracks.size()){
@@ -213,10 +213,22 @@ public class MasterTrackListeners {
         return new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                for(AudioTrack track: masterTrack.audioTracks){
-                    System.out.println("Track " + track.trackNumber + ": " + "audioLabel = " + track.audioLabel.getText() + ", focused = " + track.focused);
+                if(masterTrack.debugReportButton.getText().equals("Debug")){
+                    for(AudioTrack track: masterTrack.audioTracks){
+                        track.printState();
+                        System.out.println("");
+//                        System.out.println("Track " + track.trackNumber + ": " + "audioLabel = " + track.audioLabel.getText() + ", focused = " + track.focused);
+                    }
+                    System.out.println("");
                 }
-                System.out.println("");
+                else if(masterTrack.debugReportButton.getText().equals("Set State")){
+                    ManualTests.setStateThree(masterTrack);
+                    masterTrack.debugReportButton.setText("Debug");
+                }
+                else if(masterTrack.debugReportButton.getText().equals("Test")){
+                    ManualTests.checkStateThree(masterTrack);
+                    masterTrack.debugReportButton.setText("Set State");
+                }
             }
         };
     }

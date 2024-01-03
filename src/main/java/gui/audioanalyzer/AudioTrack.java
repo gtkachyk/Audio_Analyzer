@@ -203,12 +203,12 @@ public class AudioTrack extends Track{
         }
     }
 
-    private File getNewAudioFile(){
+    void getNewAudioFile(){
         // Open the file browser at the current directory.
         final FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("."));
         fileChooser.setTitle("Select a file for track " + trackNumber + "...");
-        return fileChooser.showOpenDialog(new Stage());
+        updateFile(fileChooser.showOpenDialog(new Stage()));
     }
 
     private void addNewAudioFile(File newFile){
@@ -243,9 +243,8 @@ public class AudioTrack extends Track{
         setStateAfterFileChange();
     }
 
-    void updateFile(){
-        File selectedFile = getNewAudioFile();
-        if(selectedFile == null) return;
+    void updateFile(File newFile){
+        if(newFile == null) return;
 
         // Unsync if needed.
         boolean synced = false;
@@ -255,10 +254,10 @@ public class AudioTrack extends Track{
         }
 
         if(trackHasFile()){
-            changeAudioFile(selectedFile);
+            changeAudioFile(newFile);
         }
         else {
-            addNewAudioFile(selectedFile);
+            addNewAudioFile(newFile);
         }
 
         // Resync if needed.
@@ -293,7 +292,7 @@ public class AudioTrack extends Track{
      */
     void focusTrack(){
         for(AudioTrack track: masterTrack.audioTracks){
-            if(masterTrack.synced){
+            if(masterTrack.synced && track.trackNumber != trackNumber){
                 Bindings.unbindBidirectional(masterTrack.volumeSlider.valueProperty(), track.volumeSlider.valueProperty());
                 Bindings.unbindBidirectional(track.volumeSlider.valueProperty(), masterTrack.volumeSlider.valueProperty());
             }
@@ -319,7 +318,9 @@ public class AudioTrack extends Track{
     }
 
     private void setTrackOutOfFocus(AudioTrack track){
+//        System.out.println("track.volumeSlider.getValue() = " + track.volumeSlider.getValue());
         track.volumeSlider.setValue(0.0);
+//        System.out.println("track.volumeSlider.getValue() = " + track.volumeSlider.getValue());
         track.focused = false;
         track.trackLabel.borderProperty().set(null);
     }
@@ -330,10 +331,10 @@ public class AudioTrack extends Track{
         for(AudioTrack track: masterTrack.audioTracks){
             if(track.trackNumber != trackNumber){
                 // Bind the volume slider of all non-focused tracks.
+                track.volumeSlider.setValue(1.0);
                 if(masterTrack.synced && track.trackHasFile()){
                     MasterTrackListeners.bindSliderValueProperties(track.volumeSlider, masterTrack.volumeSlider);
                 }
-                track.volumeSlider.setValue(1.0);
             }
         }
         masterTrack.setSwitchDisabled();
@@ -369,5 +370,27 @@ public class AudioTrack extends Track{
 
     boolean trackHasFile(){
         return (audioFile != null) && (media != null) && (mediaPlayer != null);
+    }
+
+    void printState(){
+        System.out.println("Track number: " + trackNumber);
+        if(trackHasFile()){
+            System.out.println("audioFile.getName(): " + audioFile.getName());
+//            System.out.println("media.toString(): " + media.toString());
+//            System.out.println("mediaPlayer.getStatus(): " + mediaPlayer.getStatus());
+//            System.out.println("atEndOfMedia: " + atEndOfMedia);
+//            System.out.println("isPlaying: " + isPlaying);
+//            System.out.println("isMuted: " + isMuted);
+//            System.out.println("pauseTime: " + pauseTime);
+            System.out.println("focused: " + focused);
+            System.out.println("synced: " + synced);
+
+            System.out.println("volumeSlider.getValue(): " + volumeSlider.getValue());
+            System.out.println("volumeSlider.valueProperty().isBound(): " + volumeSlider.valueProperty().isBound());
+            System.out.println("masterTrack.volumeSlider.valueProperty().isBound(): " + masterTrack.volumeSlider.valueProperty().isBound());
+        }
+        else{
+            System.out.println("<no file>");
+        }
     }
 }

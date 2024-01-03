@@ -228,7 +228,7 @@ public class AudioTrackListeners {
         return new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                audioTrack.updateFile();
+                audioTrack.getNewAudioFile();
             }
         };
     }

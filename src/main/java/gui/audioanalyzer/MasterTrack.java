@@ -103,9 +103,9 @@ public class MasterTrack extends Track {
         totalTimeLabel.setText("00:00");
         switchButton.setText("Switch");
         addTrackButton.setText("Add Track");
-        debugReportButton.setText("Debug");
+        debugReportButton.setText("Set State");
         setGUIDefaultState();
-        debugReportButton.setVisible(false); // Set to true to debug.
+        debugReportButton.setVisible(true); // Set to true to debug.
 
     }
 
@@ -220,6 +220,7 @@ public class MasterTrack extends Track {
     }
 
     private void removeAudioTrackBackendAdjust(AudioTrack track) throws TrackRemoveException {
+        boolean oldSynced = synced;
         prepareTrackForRemoval(track);
 
         // Special case: The track to remove has no file.
@@ -241,6 +242,10 @@ public class MasterTrack extends Track {
             removeFromAudioTracks(track);
         }
         refreshFocusState();
+
+        if(oldSynced){
+            syncButton.fire();
+        }
     }
 
     /**
@@ -248,7 +253,7 @@ public class MasterTrack extends Track {
      * @param track The track to prepare.
      */
     private void prepareTrackForRemoval(AudioTrack track){
-        if(track.synced) unSyncTrack(track);
+        if(synced) syncButton.fire();
         if(track.focused) track.undoFocus();
         if(track.mediaPlayer != null) track.mediaPlayer.stop();
     }

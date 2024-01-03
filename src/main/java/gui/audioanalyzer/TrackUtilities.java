@@ -113,4 +113,20 @@ public class TrackUtilities {
             button.fire();
         }
     }
+
+    static void printAllVolumeSliderValues(ArrayList<AudioTrack> tracks){
+        for(AudioTrack track: tracks){
+            System.out.println("For track " + track.trackNumber + ", volumeSlider.getValue() = " + track.volumeSlider.getValue());
+        }
+        System.out.println("");
+    }
+
+    static void printAllTrackStates(ArrayList<AudioTrack> tracks){
+        for(AudioTrack track: tracks){
+            track.printState();
+            System.out.println("");
+//                        System.out.println("Track " + track.trackNumber + ": " + "audioLabel = " + track.audioLabel.getText() + ", focused = " + track.focused);
+        }
+        System.out.println("");
+    }
 }
