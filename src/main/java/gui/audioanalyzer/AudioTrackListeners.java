@@ -33,9 +33,9 @@ public class AudioTrackListeners {
                                     allTracksPlaying = false;
                                 }
                             }
-                            if(allTracksPlaying){
-                                audioTrack.masterTrack.PPRButton.setText("Pause");
-                            }
+//                            if(allTracksPlaying){
+//                                audioTrack.masterTrack.PPRButton.setText("Pause");
+//                            }
                         }
                     }
                     else if(audioTrack.masterTrack.PPRButton.getText().equals("Pause")){
@@ -46,11 +46,12 @@ public class AudioTrackListeners {
                                     allTracksPaused = false;
                                 }
                             }
-                            if(allTracksPaused){
-                                audioTrack.masterTrack.PPRButton.setText("Play");
-                            }
+//                            if(allTracksPaused){
+//                                audioTrack.masterTrack.PPRButton.setText("Play");
+//                            }
                         }
                     }
+                    audioTrack.masterTrack.refreshPPRText();
                 }
             }
         };

@@ -7,6 +7,7 @@ import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
+import javafx.util.Duration;
 
 public class MasterTrackListeners {
 
@@ -101,11 +102,13 @@ public class MasterTrackListeners {
                     masterTrack.syncButton.setText("Sync");
                     masterTrack.synced = false;
                     masterTrack.unSync();
+//                    masterTrack.refreshDisabledStatus();
                 }
                 else{
                     masterTrack.syncButton.setText("Unlock");
                     masterTrack.synced = true;
                     masterTrack.sync();
+//                    masterTrack.refreshDisabledStatus();
                 }
 
                 // Refocus focused track if one exists.
@@ -185,14 +188,25 @@ public class MasterTrackListeners {
                     masterTrack.timeSlider.setValue(0.0);
 
                     for(AudioTrack track: masterTrack.audioTracks){
-                        track.atEndOfMedia = false;
-                        track.isPlaying = true;
-                        track.pauseTime = 0.0;
-                        track.mediaPlayer.play();
+                        if(track.trackHasFile()){
+                            track.atEndOfMedia = false;
+                            track.isPlaying = true;
+                            track.pauseTime = 0.0;
+                            track.mediaPlayer.seek(new Duration(0.0));
+                            track.mediaPlayer.play();
+                        }
                     }
 
                     masterTrack.PPRButton.setText("Play");
                     masterTrack.PPRButton.fire();
+                }
+                else if(masterTrack.PPRButton.getText().equals("Press All")){
+                    for(AudioTrack track: masterTrack.audioTracks){
+                        if(track.trackHasFile()){
+                            track.PPRButton.fire();
+                        }
+                    }
+                    masterTrack.refreshPPRText();
                 }
             }
         };

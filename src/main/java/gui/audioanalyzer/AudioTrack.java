@@ -17,8 +17,6 @@ import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -26,13 +24,12 @@ import javafx.util.Duration;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.concurrent.Callable;
 
 public class AudioTrack extends Track{
 
     // Constants.
-    static final double REMOVE_TRACK_BUTTON_SIZE = 16.0; // The button is a square. Original value 15.0
+    static final double REMOVE_TRACK_BUTTON_SIZE = 10.0; // The button is a square. Original value 15.0
 
     File audioFile;
     Media media;
@@ -115,14 +112,14 @@ public class AudioTrack extends Track{
         PPRButton.setDisable(true);
         PPRButton.setText("Play");
         timeSlider.setDisable(true);
-        removeTrackButton.setMinWidth(REMOVE_TRACK_BUTTON_SIZE);
-        removeTrackButton.setMinHeight(REMOVE_TRACK_BUTTON_SIZE);
-        removeTrackButton.setStyle("-fx-background-color: #e81123;");
-        Image imageRemove = new Image(new File("src/images/remove_track_button_image.png").toURI().toString());
-        ImageView ivRemove = new ImageView(imageRemove);
-        ivRemove.setFitHeight(7.0);
-        ivRemove.setFitWidth(7.0);
-        removeTrackButton.setGraphic(ivRemove);
+        removeTrackButton.setText("X");
+
+//        Image imageRemove = new Image(new File("src/images/remove_track_button_image.png").toURI().toString());
+//        ImageView ivRemove = new ImageView(imageRemove);
+//        ivRemove.setFitHeight(5.0);
+//        ivRemove.setFitWidth(5.0);
+//        removeTrackButton.setGraphic(ivRemove);
+//        removeTrackButton.setStyle("-fx-background-color: #e81123;");
 
         audioLabel.setText("Add file...");
     }
@@ -204,6 +201,18 @@ public class AudioTrack extends Track{
         }
         atEndOfMedia = true;
         PPRButton.setText("Restart");
+
+//        if(!masterTrack.synced){
+//            int finishedTracks = 1;
+//            for(AudioTrack track: masterTrack.audioTracks){
+//                if(track.trackNumber != trackNumber && track.trackHasFile()){
+//                    if(track.PPRButton.getText().equals("Restart")) finishedTracks++;
+//                }
+//            }
+//            if(finishedTracks == (masterTrack.audioTracks.size() - masterTrack.emptyTracks())){
+//                masterTrack.PPRButton.setText("Restart");
+//            }
+//        }
     }
 
     AudioTrackCoordinates getTrackCoordinates(){

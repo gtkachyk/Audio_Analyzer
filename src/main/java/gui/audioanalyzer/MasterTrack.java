@@ -99,20 +99,14 @@ public class MasterTrack extends Track {
         focusTrackLabel.setText("Focus Track: None");
         lowerVolumeLabel.setText("-");
         volumeSlider.setMax(VOLUME_SLIDER_MAX);
-        volumeSlider.setValue(volumeSlider.getMax());
         raiseVolumeLabel.setText("+");
-        PPRButton.setDisable(true);
-        PPRButton.setText("Play");
-        timeSlider.setDisable(true);
-        currentTimeLabel.setText("00:00 / ");
         totalTimeLabel.setText("00:00");
         switchButton.setText("Switch");
-        switchButton.setDisable(true);
-        syncButton.setText("Sync");
-        syncButton.setDisable(true);
         addTrackButton.setText("Add Track");
         debugReportButton.setText("Debug");
+        setGUIDefaultState();
         debugReportButton.setVisible(false); // Set to true to debug.
+
     }
 
     @Override
@@ -333,6 +327,22 @@ public class MasterTrack extends Track {
     }
 
     void refreshDisabledStatus(){
+//        if(!someTrackHasFile()){
+//            if(synced){
+//                syncButton.setDisable(false);
+//                syncButton.fire();
+//            }
+//            setGUIDefaultState();
+//        }
+//        else{
+//            if(synced){
+//                setGUIActiveState();
+//            }
+//            else{
+//                setGUIDefaultState();
+//                PPRButton.setDisable(false);
+//            }
+//        }
         if(someTrackHasFile()){
             setGUIActiveState();
         }
@@ -340,6 +350,7 @@ public class MasterTrack extends Track {
             setGUIDefaultState();
             synced = false;
         }
+        setSwitchDisabled();
     }
 
     void setGUIActiveState(){
@@ -355,7 +366,6 @@ public class MasterTrack extends Track {
         PPRButton.setText("Play");
         PPRButton.setDisable(true);
         syncButton.setText("Sync");
-        syncButton.setDisable(true);
         volumeSlider.setValue(1.0);
         volumeSlider.setDisable(true);
         currentTimeLabel.setText("00:00 /");
@@ -499,6 +509,51 @@ public class MasterTrack extends Track {
 
     MasterTrackCoordinates getTrackCoordinates(){
         return (MasterTrackCoordinates) trackCoordinates;
+    }
+
+    // TODO: Put utility methods into a different class.
+    int emptyTracks(){
+        int emptyTracks = 0;
+        for(AudioTrack track: audioTracks){
+            if(!track.trackHasFile()){
+                emptyTracks++;
+            }
+        }
+        return emptyTracks;
+    }
+
+    void refreshPPRText(){
+        if(!synced){
+            int finishedTracks = 0;
+            int playingTracks = 0;
+            int pausedTracks = 0;
+            for(AudioTrack track: audioTracks){
+                if(track.trackHasFile()){
+                    if(track.PPRButton.getText().equals("Play")){
+                        pausedTracks++;
+                    }
+                    else if(track.PPRButton.getText().equals("Restart")){
+                        finishedTracks++;
+                    }
+                    else{
+                        playingTracks++;
+                    }
+                }
+            }
+            int nonEmptyTracks = audioTracks.size() - emptyTracks();
+            if(finishedTracks == nonEmptyTracks){
+                PPRButton.setText("Restart");
+            }
+            else if(playingTracks == nonEmptyTracks){
+                PPRButton.setText("Pause");
+            }
+            else if(pausedTracks == nonEmptyTracks){
+                PPRButton.setText("Play");
+            }
+            else{
+                PPRButton.setText("Press All");
+            }
+        }
     }
 
     void printAudioTracksSortedByDuration(){
