@@ -1,8 +1,10 @@
 package gui.audioanalyzer;
 
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -11,6 +13,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+
+import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
@@ -230,5 +234,25 @@ public class MainController implements Initializable {
         Scene scene = alert.getDialogPane().getScene();
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("alertStyles.css")).toExternalForm());
         return alert;
+    }
+
+    /**
+     * Displays the stage containing application information when 'About File Handler' is pressed.
+     */
+    @FXML
+    private void setAboutMenuItem(ActionEvent event){
+        try{
+            Stage stage = new Stage();
+            FXMLLoader fxmlLoader = new FXMLLoader();
+            Pane root = fxmlLoader.load(Objects.requireNonNull(getClass().getResource("About.fxml")).openStream());
+
+            stage.setScene(new Scene(root, 850, 200));
+            AboutController aboutController = fxmlLoader.getController();
+            stage.setTitle("About Audio Analyzer");
+            stage.showAndWait();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
     }
 }
