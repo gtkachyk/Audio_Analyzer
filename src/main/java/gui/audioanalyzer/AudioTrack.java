@@ -182,6 +182,9 @@ public class AudioTrack extends Track{
         }
         atEndOfMedia = true;
         PPRButton.setText("Restart");
+        if(synced && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.longestAudioTrack)){
+            masterTrack.PPRButton.setText("Restart");
+        }
     }
 
     AudioTrackCoordinates getTrackCoordinates(){
