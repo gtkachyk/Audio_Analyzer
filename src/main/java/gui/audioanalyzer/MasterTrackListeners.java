@@ -15,10 +15,7 @@ public class MasterTrackListeners {
         return new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue observableValue, Number oldValue, Number newValue) {
-                // masterTrack.currentTimeLabel.setText(masterTrack.getTime(new Duration(masterTrack.timeSlider.getValue() * masterTrack.MILLISECONDS_PER_SECOND)) + " / ");
-                if(newValue.doubleValue() == masterTrack.timeSlider.getMax()){
-                    masterTrack.PPRButton.setText("Restart");
-                }
+                masterTrack.currentTimeLabel.setText(Track.getTime(new Duration(masterTrack.timeSlider.getValue() * MasterTrack.MILLISECONDS_PER_SECOND)) + " / ");
             }
         };
     }
@@ -99,11 +96,13 @@ public class MasterTrackListeners {
             @Override
             public void handle(ActionEvent event) {
                 if(masterTrack.synced){
+                    addTimeSliderChangeListener(masterTrack);
                     masterTrack.syncButton.setText("Sync");
                     masterTrack.synced = false;
                     masterTrack.unSync();
                 }
                 else{
+                    removeTimeSliderChangeListener(masterTrack);
                     masterTrack.syncButton.setText("Unlock");
                     masterTrack.synced = true;
                     masterTrack.sync();
@@ -279,6 +278,11 @@ public class MasterTrackListeners {
         EventHandler<ActionEvent> newEventHandler = getDebugButtonOnActionEH(masterTrack);
         masterTrack.debugButtonOnActionEH = newEventHandler;
         masterTrack.debugReportButton.setOnAction(newEventHandler);
+    }
+
+    static void removeTimeSliderChangeListener(MasterTrack masterTrack){
+        masterTrack.timeSlider.valueProperty().removeListener(masterTrack.timeSliderChangeListener);
+        masterTrack.timeSliderChangeListener = null;
     }
 
     /**
