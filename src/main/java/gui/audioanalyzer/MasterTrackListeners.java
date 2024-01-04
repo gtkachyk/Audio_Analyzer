@@ -102,13 +102,11 @@ public class MasterTrackListeners {
                     masterTrack.syncButton.setText("Sync");
                     masterTrack.synced = false;
                     masterTrack.unSync();
-//                    masterTrack.refreshDisabledStatus();
                 }
                 else{
                     masterTrack.syncButton.setText("Unlock");
                     masterTrack.synced = true;
                     masterTrack.sync();
-//                    masterTrack.refreshDisabledStatus();
                 }
 
                 masterTrack.refreshPPRText();
@@ -169,7 +167,7 @@ public class MasterTrackListeners {
                     for(AudioTrack track: masterTrack.audioTracks){
                         if(track.trackHasFile() && track.isPlaying){
                             // Pause all playing tracks.
-                            TrackUtilities.forceFire(track.PPRButton);
+                            if(!track.PPRButton.getText().equals("Restart")) TrackUtilities.forceFire(track.PPRButton);
                         }
                     }
                     masterTrack.PPRButton.setText("Play");
@@ -178,7 +176,7 @@ public class MasterTrackListeners {
                     for(AudioTrack track: masterTrack.audioTracks){
                         if(track.trackHasFile() && !track.isPlaying){
                             // Play all paused tracks.
-                            TrackUtilities.forceFire(track.PPRButton);
+                            if(!track.PPRButton.getText().equals("Restart")) TrackUtilities.forceFire(track.PPRButton);
                         }
                     }
                     masterTrack.PPRButton.setText("Pause");
@@ -224,7 +222,7 @@ public class MasterTrackListeners {
                     System.out.println("");
                 }
                 else if(masterTrack.debugReportButton.getText().equals("Set State")){
-                    ManualTests.setStateThree(masterTrack);
+                    ManualTests.setStateFour(masterTrack);
                     masterTrack.debugReportButton.setText("Debug");
                 }
                 else if(masterTrack.debugReportButton.getText().equals("Test")){

@@ -262,8 +262,14 @@ public class AudioTrackListeners {
         return new Runnable() {
             @Override
             public void run() {
+                // If synced and tracks are playing, start playing this track as soon as it's ready.
                 if(audioTrack.masterTrack.synced && audioTrack.masterTrack.PPRButton.getText().equals("Pause")){
                     TrackUtilities.forceFire(audioTrack.PPRButton);
+                }
+                else{
+                    // Otherwise, get mediaPlayer out of READY status asap, as it can cause bugs.
+                    audioTrack.mediaPlayer.play();
+                    audioTrack.mediaPlayer.pause();
                 }
             }
         };

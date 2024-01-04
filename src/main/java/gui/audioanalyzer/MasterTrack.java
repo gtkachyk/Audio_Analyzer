@@ -440,7 +440,12 @@ public class MasterTrack extends Track {
             PPRButton.setText("Play");
         }
         else{
-            PPRButton.setText("Press All");
+            if(synced){
+                PPRButton.setText("Play");
+            }
+            else{
+                PPRButton.setText("Press All");
+            }
         }
     }
 

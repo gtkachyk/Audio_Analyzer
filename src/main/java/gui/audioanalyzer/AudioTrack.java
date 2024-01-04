@@ -153,7 +153,6 @@ public class AudioTrack extends Track{
         currentTimeLabel.textProperty().bind(Bindings.createStringBinding(new Callable<String>() {
             @Override
             public String call() throws Exception {
-
                 // Check where the time slider is.
                 if(timeSlider.getValue() == timeSlider.getMax()){
                     return getTime(mediaPlayer.getTotalDuration()) + " / ";
@@ -230,7 +229,7 @@ public class AudioTrack extends Track{
         // Unbind properties.
         mediaPlayer.volumeProperty().unbindBidirectional(volumeSlider.valueProperty());
         volumeSlider.valueProperty().unbindBidirectional(mediaPlayer.volumeProperty());
-        currentTimeLabel.textProperty().unbind();
+        currentTimeLabel.textProperty().unbind(); // Need to rebind with bindCurrentTimeLabel()?
 
         // Update media.
         setTrackAudio(newFile);
