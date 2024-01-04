@@ -47,6 +47,7 @@ public class AudioTrackListeners {
         return new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
+//                System.out.println("1. master track time slider value = " + audioTrack.masterTrack.timeSlider.getValue());
                 if(!audioTrack.masterTrack.synced){
                     if(audioTrack.masterTrack.PPRButton.getText().equals("Play")){
                         if(newValue.equals("Pause")){
@@ -76,6 +77,8 @@ public class AudioTrackListeners {
                     }
                     audioTrack.masterTrack.refreshPPRText();
                 }
+//                System.out.println("2. master track time slider value = " + audioTrack.masterTrack.timeSlider.getValue());
+//                System.out.println("");
             }
         };
     }
@@ -159,13 +162,18 @@ public class AudioTrackListeners {
         };
     }
 
-    private static ChangeListener<Duration> getMediaPlayerCurrentTimeCL(AudioTrack audioTrack){
+    private static ChangeListener<Duration> getMediaPlayerCurrentTimeCL(AudioTrack audioTrack){ // Bug in here (fixed?)
         return new ChangeListener<Duration>() {
             @Override
             public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTime, Duration newTime) {
                 audioTrack.bindCurrentTimeLabel();
                 if(!audioTrack.timeSlider.isValueChanging()){
-                    audioTrack.timeSlider.setValue(newTime.toSeconds());
+                    if(newTime.toSeconds() < audioTrack.pauseTime){
+                        audioTrack.timeSlider.setValue(audioTrack.timeSlider.getMax());
+                    }
+                    else{
+                        audioTrack.timeSlider.setValue(newTime.toSeconds());
+                    }
                 }
                 audioTrack.labelMatchEndSong(audioTrack.currentTimeLabel.getText(), audioTrack.totalTimeLabel.getText());
             }

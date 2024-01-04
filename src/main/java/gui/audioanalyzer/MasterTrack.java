@@ -421,11 +421,11 @@ public class MasterTrack extends Track {
                 if(track.PPRButton.getText().equals("Play")){
                     pausedTracks++;
                 }
-                else if(track.PPRButton.getText().equals("Restart")){
-                    finishedTracks++;
+                else if(track.PPRButton.getText().equals("Pause")){
+                    playingTracks++;
                 }
                 else{
-                    playingTracks++;
+                    finishedTracks++;
                 }
             }
         }
@@ -440,8 +440,8 @@ public class MasterTrack extends Track {
             PPRButton.setText("Play");
         }
         else{
-            if(synced){
-                PPRButton.setText("Play");
+            if(synced && TrackUtilities.isSomeTrackPlaying(audioTracks)){
+                PPRButton.setText("Pause");
             }
             else{
                 PPRButton.setText("Press All");

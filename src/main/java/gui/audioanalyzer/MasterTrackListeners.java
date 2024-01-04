@@ -116,6 +116,13 @@ public class MasterTrackListeners {
                         track.focusTrack();
                     }
                 }
+
+                // If some track is playing at the time of sync, play the remaining tracks.
+                if(TrackUtilities.isSomeTrackPlaying(masterTrack.audioTracks)){
+                    for(AudioTrack track: masterTrack.audioTracks){
+                        if(!track.isPlaying) TrackUtilities.forceFire(track.PPRButton);
+                    }
+                }
             }
         };
     }
