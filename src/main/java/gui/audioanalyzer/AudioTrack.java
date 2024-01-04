@@ -173,16 +173,22 @@ public class AudioTrack extends Track{
                 atEndOfMedia = false;
                 if(isPlaying){
                     PPRButton.setText("Pause");
+                    if(masterTrack.synced && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.longestAudioTrack)){
+                        masterTrack.PPRButton.setText("Pause");
+                    }
                 }
                 else{
                     PPRButton.setText("Play");
+                    if(masterTrack.synced && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.longestAudioTrack)){
+                        masterTrack.PPRButton.setText("Play");
+                    }
                 }
                 return;
             }
         }
         atEndOfMedia = true;
         PPRButton.setText("Restart");
-        if(synced && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.longestAudioTrack)){
+        if(masterTrack.synced && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.longestAudioTrack)){
             masterTrack.PPRButton.setText("Restart");
         }
     }
@@ -317,14 +323,14 @@ public class AudioTrack extends Track{
         else{
             track.trackLabel.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
         }
+        // if(!masterTrack.synced) track.volumeSlider.setDisable(false);
     }
 
     private void setTrackOutOfFocus(AudioTrack track){
-//        System.out.println("track.volumeSlider.getValue() = " + track.volumeSlider.getValue());
         track.volumeSlider.setValue(0.0);
-//        System.out.println("track.volumeSlider.getValue() = " + track.volumeSlider.getValue());
         track.focused = false;
         track.trackLabel.borderProperty().set(null);
+        // if(!masterTrack.synced) track.volumeSlider.setDisable(true);
     }
 
     void undoFocus(){
@@ -333,6 +339,7 @@ public class AudioTrack extends Track{
         for(AudioTrack track: masterTrack.audioTracks){
             if(track.trackNumber != trackNumber){
                 // Bind the volume slider of all non-focused tracks.
+                // if(!masterTrack.synced) track.volumeSlider.setDisable(false);
                 track.volumeSlider.setValue(1.0);
                 if(masterTrack.synced && track.trackHasFile()){
                     MasterTrackListeners.bindSliderValueProperties(track.volumeSlider, masterTrack.volumeSlider);
@@ -378,18 +385,16 @@ public class AudioTrack extends Track{
         System.out.println("Track number: " + trackNumber);
         if(trackHasFile()){
             System.out.println("audioFile.getName(): " + audioFile.getName());
-//            System.out.println("media.toString(): " + media.toString());
-//            System.out.println("mediaPlayer.getStatus(): " + mediaPlayer.getStatus());
-//            System.out.println("atEndOfMedia: " + atEndOfMedia);
-//            System.out.println("isPlaying: " + isPlaying);
-//            System.out.println("isMuted: " + isMuted);
-//            System.out.println("pauseTime: " + pauseTime);
+            System.out.println("media.toString(): " + media.toString());
+            System.out.println("mediaPlayer.getStatus(): " + mediaPlayer.getStatus());
+            System.out.println("atEndOfMedia: " + atEndOfMedia);
+            System.out.println("isPlaying: " + isPlaying);
+            System.out.println("isMuted: " + isMuted);
+            System.out.println("pauseTime: " + pauseTime);
             System.out.println("focused: " + focused);
             System.out.println("synced: " + synced);
 
             System.out.println("volumeSlider.getValue(): " + volumeSlider.getValue());
-            System.out.println("volumeSlider.valueProperty().isBound(): " + volumeSlider.valueProperty().isBound());
-            System.out.println("masterTrack.volumeSlider.valueProperty().isBound(): " + masterTrack.volumeSlider.valueProperty().isBound());
         }
         else{
             System.out.println("<no file>");

@@ -33,6 +33,13 @@ public class TrackUtilities {
         return false;
     }
 
+    static boolean isSomeTrackPlaying(ArrayList<AudioTrack> tracks){
+        for(AudioTrack track: tracks){
+            if(track.isPlaying) return true;
+        }
+        return false;
+    }
+
     /**
      * Determines if at least one track in audioTracks has a valid file associated with it.
      * @return True if some track has a valid file, false otherwise.
