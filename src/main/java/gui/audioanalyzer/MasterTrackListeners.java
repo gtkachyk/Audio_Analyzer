@@ -103,6 +103,21 @@ public class MasterTrackListeners {
                 }
                 else{
                     removeTimeSliderChangeListener(masterTrack);
+
+//                    if(masterTrack.timeSlider.getValue() == masterTrack.timeSlider.getMax()){
+//                        for(AudioTrack track: masterTrack.audioTracks){
+//                            if(track.trackHasFile()){
+//                                System.out.println("BEFORE");
+//                                TrackUtilities.printAllTrackStates(masterTrack.audioTracks);
+//                                track.pauseTime = track.mediaPlayer.getTotalDuration().toSeconds();
+//                                track.mediaPlayer.seek(track.mediaPlayer.getTotalDuration());
+//                                track.timeSlider.setValue(track.timeSlider.getMax());
+//                                System.out.println("AFTER");
+//                                TrackUtilities.printAllTrackStates(masterTrack.audioTracks);
+//                            }
+//                        }
+//                    }
+
                     masterTrack.syncButton.setText("Unlock");
                     masterTrack.synced = true;
                     masterTrack.sync();

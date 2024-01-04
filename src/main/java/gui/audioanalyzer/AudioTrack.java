@@ -395,6 +395,8 @@ public class AudioTrack extends Track{
             System.out.println("synced: " + synced);
 
             System.out.println("volumeSlider.getValue(): " + volumeSlider.getValue());
+            System.out.println("timeSlider.getValue(): " + timeSlider.getValue());
+            System.out.println("mediaPlayer.getCurrentTime(): " + mediaPlayer.getCurrentTime().toSeconds());
         }
         else{
             System.out.println("<no file>");

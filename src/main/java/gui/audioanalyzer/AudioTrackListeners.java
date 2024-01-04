@@ -162,17 +162,22 @@ public class AudioTrackListeners {
         };
     }
 
-    private static ChangeListener<Duration> getMediaPlayerCurrentTimeCL(AudioTrack audioTrack){ // Bug in here (fixed?)
+    private static ChangeListener<Duration> getMediaPlayerCurrentTimeCL(AudioTrack audioTrack){
         return new ChangeListener<Duration>() {
             @Override
             public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTime, Duration newTime) {
                 audioTrack.bindCurrentTimeLabel();
                 if(!audioTrack.timeSlider.isValueChanging()){
-                    if(newTime.toSeconds() < audioTrack.pauseTime){
+                    if(audioTrack.masterTrack.synced && audioTrack.masterTrack.timeSlider.getValue() == audioTrack.masterTrack.timeSlider.getMax()){
                         audioTrack.timeSlider.setValue(audioTrack.timeSlider.getMax());
                     }
                     else{
-                        audioTrack.timeSlider.setValue(newTime.toSeconds());
+                        if(audioTrack.timeSlider.getValue() == audioTrack.timeSlider.getMax()){
+                            audioTrack.timeSlider.setValue(audioTrack.timeSlider.getMax());
+                        }
+                        else{
+                            audioTrack.timeSlider.setValue(newTime.toSeconds());
+                        }
                     }
                 }
                 audioTrack.labelMatchEndSong(audioTrack.currentTimeLabel.getText(), audioTrack.totalTimeLabel.getText());
