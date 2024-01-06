@@ -1,13 +1,19 @@
 package gui.audioanalyzer;
 
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
+
+import java.util.Optional;
 
 public class AudioTrackListeners {
 
@@ -18,26 +24,14 @@ public class AudioTrackListeners {
                 if(!audioTrack.trackHasFile()) return;
                 audioTrack.bindCurrentTimeLabel();
                 if(audioTrack.atEndOfMedia){
-                    // System.out.println("end of media " + trackNumber);
-                    audioTrack.PPRButton.setText("Pause");
-                    audioTrack.timeSlider.setValue(0.0);
-                    audioTrack.atEndOfMedia = false;
-                    audioTrack.isPlaying = false;
-                    audioTrack.pauseTime = 0.0; // Update pause time.
+                    audioTrack.restartTrack();
+                    return;
                 }
                 if(audioTrack.isPlaying){
-                    // System.out.println("playing " + trackNumber);
-                    audioTrack.PPRButton.setText("Play");
-                    audioTrack.mediaPlayer.pause();
-                    audioTrack.isPlaying = false;
-                    audioTrack.pauseTime = audioTrack.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+                    audioTrack.pauseTrack();
                 }
                 else{
-                    // System.out.println("paused " + trackNumber);
-                    audioTrack.mediaPlayer.seek(Duration.seconds(audioTrack.pauseTime));
-                    audioTrack.PPRButton.setText("Pause");
-                    audioTrack.mediaPlayer.play();
-                    audioTrack.isPlaying = true;
+                    audioTrack.playTrack();
                 }
             }
         };
@@ -47,38 +41,32 @@ public class AudioTrackListeners {
         return new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
-//                System.out.println("1. master track time slider value = " + audioTrack.masterTrack.timeSlider.getValue());
+                // This is used to update the master PPR text when the tracks aren't synced.
                 if(!audioTrack.masterTrack.synced){
-                    if(audioTrack.masterTrack.PPRButton.getText().equals("Play")){
-                        if(newValue.equals("Pause")){
-                            boolean allTracksPlaying = true;
-                            for(AudioTrack track: audioTrack.masterTrack.audioTracks){
-                                if(!track.PPRButton.getText().equals("Pause")){
-                                    allTracksPlaying = false;
-                                }
-                            }
-//                            if(allTracksPlaying){
-//                                audioTrack.masterTrack.PPRButton.setText("Pause");
-//                            }
-                        }
-                    }
-                    else if(audioTrack.masterTrack.PPRButton.getText().equals("Pause")){
-                        if(newValue.equals("Play")){
-                            boolean allTracksPaused = true;
-                            for(AudioTrack track: audioTrack.masterTrack.audioTracks){
-                                if(!track.PPRButton.getText().equals("Play")){
-                                    allTracksPaused = false;
-                                }
-                            }
-//                            if(allTracksPaused){
-//                                audioTrack.masterTrack.PPRButton.setText("Play");
-//                            }
-                        }
-                    }
                     audioTrack.masterTrack.refreshPPRText();
                 }
-//                System.out.println("2. master track time slider value = " + audioTrack.masterTrack.timeSlider.getValue());
-//                System.out.println("");
+                else{
+                    if(TrackUtilities.trackEquals(audioTrack, audioTrack.masterTrack.shortestAudioTrack)){
+                        audioTrack.masterTrack.PPRButton.setText(newValue);
+                    }
+                    for(AudioTrack track: audioTrack.masterTrack.audioTracks){
+                        if(track.trackHasFile() && !TrackUtilities.trackEquals(track, audioTrack.masterTrack.shortestAudioTrack)){
+                            track.PPRButton.setText(newValue);
+                            if(newValue.equals("Pause") && !track.mediaPlayer.getStatus().equals(MediaPlayer.Status.PLAYING)){
+                                track.mediaPlayer.play();
+                                track.isPlaying = true;
+                            }
+                            else if(newValue.equals("Play") && !track.mediaPlayer.getStatus().equals(MediaPlayer.Status.PAUSED)){
+                                track.mediaPlayer.pause();
+                                track.isPlaying = false;
+                            }
+                            else if(newValue.equals("Restart") && !track.mediaPlayer.getStatus().equals(MediaPlayer.Status.PAUSED)){
+                                track.mediaPlayer.pause();
+                                track.isPlaying = false;
+                            }
+                        }
+                    }
+                }
             }
         };
     }
@@ -98,49 +86,10 @@ public class AudioTrackListeners {
         };
     }
 
-    private static ChangeListener<Duration> getMediaPlayerTotalDurationCL(AudioTrack audioTrack){
-        return new ChangeListener<Duration>() {
-            @Override
-            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldDuration, Duration newDuration) {
-                audioTrack.bindCurrentTimeLabel();
-                audioTrack.timeSlider.setMax(newDuration.toSeconds());
-                audioTrack.totalTimeLabel.setText(Track.getTime(newDuration));
-
-                // Automatically update the longest track when a new track is added or the file of an existing track changes.
-                // Remove audioTrack from masterTrack.audioTracksSortedByDuration if needed.
-                boolean trackInSortedList = false;
-                int index = 0;
-                for(int i = 0; i < audioTrack.masterTrack.audioTracksSortedByDuration.size(); i++){
-                    if(audioTrack.masterTrack.audioTracksSortedByDuration.get(i).trackNumber == audioTrack.trackNumber){
-                        trackInSortedList = true;
-                        index = i;
-                    }
-                }
-                if(trackInSortedList){
-                    // If this is reached it means the existing audioFile of this track was replaced with a new one.
-                    audioTrack.masterTrack.audioTracksSortedByDuration.remove(index);
-                }
-
-                // Add audioTrack from masterTrack.audioTracksSortedByDuration.
-                audioTrack.masterTrack.audioTracksSortedByDuration.add(audioTrack);
-                audioTrack.masterTrack.refreshLongestAudioTrack();
-
-                // Refresh sync if needed.
-                if(audioTrack.masterTrack.synced){
-                    audioTrack.masterTrack.refreshSync();
-//                    audioTrack.masterTrack.refreshSync();
-                }
-
-                audioTrack.masterTrack.refreshFocus();
-            }
-        };
-    }
-
     private static ChangeListener<Boolean> getTimeSliderValueChangingCL(AudioTrack audioTrack){
         return new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observableValue, Boolean wasChanging, Boolean isChanging) {
-                audioTrack.bindCurrentTimeLabel();
                 if(!isChanging){
                     audioTrack.mediaPlayer.seek(Duration.seconds(audioTrack.timeSlider.getValue()));
                 }
@@ -168,16 +117,8 @@ public class AudioTrackListeners {
             public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTime, Duration newTime) {
                 audioTrack.bindCurrentTimeLabel();
                 if(!audioTrack.timeSlider.isValueChanging()){
-                    if(audioTrack.masterTrack.synced && audioTrack.masterTrack.timeSlider.getValue() == audioTrack.masterTrack.timeSlider.getMax()){
-                        audioTrack.timeSlider.setValue(audioTrack.timeSlider.getMax());
-                    }
-                    else{
-                        if(audioTrack.timeSlider.getValue() == audioTrack.timeSlider.getMax()){
-                            audioTrack.timeSlider.setValue(audioTrack.timeSlider.getMax());
-                        }
-                        else{
-                            audioTrack.timeSlider.setValue(newTime.toSeconds());
-                        }
+                    if(audioTrack.timeSlider.getValue() != audioTrack.timeSlider.getMax()){ // This is needed to address a bug that likely involves the pauseTime mechanic.
+                        audioTrack.timeSlider.setValue(newTime.toSeconds());
                     }
                 }
                 audioTrack.labelMatchEndSong(audioTrack.currentTimeLabel.getText(), audioTrack.totalTimeLabel.getText());
@@ -189,15 +130,9 @@ public class AudioTrackListeners {
         return new Runnable() {
             @Override
             public void run() {
+                audioTrack.bindCurrentTimeLabel();
                 audioTrack.PPRButton.setText("Restart");
-//                if(audioTrack.masterTrack.longestAudioTrack.trackNumber == audioTrack.trackNumber){
-//                    audioTrack.masterTrack.PPRButton.setText("Restart");
-//                }
                 audioTrack.atEndOfMedia = true;
-                if(!audioTrack.currentTimeLabel.textProperty().equals(audioTrack.totalTimeLabel.textProperty())){
-                    audioTrack.currentTimeLabel.textProperty().unbind();
-                    audioTrack.currentTimeLabel.setText(Track.getTime(audioTrack.mediaPlayer.getTotalDuration()) + " / ");
-                }
             }
         };
     }
@@ -207,7 +142,7 @@ public class AudioTrackListeners {
             @Override
             public void handle(MouseEvent event) {
                 audioTrack.bindCurrentTimeLabel();
-                audioTrack.pauseTime = audioTrack.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
+                audioTrack.pauseTime = audioTrack.mediaPlayer.getCurrentTime().toSeconds();
             }
         };
     }
@@ -219,9 +154,7 @@ public class AudioTrackListeners {
                 // Un-mute audio after scrubbing.
                 audioTrack.mediaPlayer.setMute(false);
                 audioTrack.isMuted = false;
-                audioTrack.pauseTime = audioTrack.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
-
-                // Update time label to fix sluggish time bug.
+                audioTrack.pauseTime = audioTrack.mediaPlayer.getCurrentTime().toSeconds();
             }
         };
     }
@@ -271,20 +204,33 @@ public class AudioTrackListeners {
         };
     }
 
+    /**
+     * This change listener is responsible for AudioTrack setup after a new file is selected.
+     * @param audioTrack
+     * @return
+     */
     private static Runnable getMediaPlayerOnReadyR(AudioTrack audioTrack){
         return new Runnable() {
             @Override
             public void run() {
-                // If synced and tracks are playing, start playing this track as soon as it's ready.
-                if(audioTrack.masterTrack.synced && TrackUtilities.isSomeTrackPlaying(audioTrack.masterTrack.audioTracks)){
-                    TrackUtilities.forceFire(audioTrack.PPRButton);
-                    audioTrack.masterTrack.refreshPPRText();
+                // Update GUI properties.
+                audioTrack.audioLabel.setText(audioTrack.audioFile.getName());
+                audioTrack.timeSlider.setMax(audioTrack.mediaPlayer.getTotalDuration().toSeconds());
+                audioTrack.totalTimeLabel.setText(Track.getTime(audioTrack.mediaPlayer.getTotalDuration()));
+                audioTrack.bindCurrentTimeLabel();
+
+                // Automatically update the shortest track when a new track is added or the file of an existing track changes.
+                // Remove audioTrack from masterTrack.audioTracksSortedByDuration if needed.
+                if(!TrackUtilities.removeTrackByNumber(audioTrack.masterTrack.audioTracksSortedByDuration, audioTrack.trackNumber)){
+                    Alert acknowledgement = Track.controller.createAlert(new Alert(Alert.AlertType.ERROR, "An error occurred in AudioTrackListeners.getMediaPlayerOnReadyR().", ButtonType.OK), "Error");
+                    Optional<ButtonType> result = acknowledgement.showAndWait();
+                    if(result.isPresent() && result.get() == ButtonType.OK) System.exit(1);
                 }
-                else{
-                    // Otherwise, get mediaPlayer out of READY status asap, as it can cause bugs.
-                    audioTrack.mediaPlayer.play();
-                    audioTrack.mediaPlayer.pause();
-                }
+                audioTrack.masterTrack.audioTracksSortedByDuration.add(audioTrack);
+                audioTrack.masterTrack.refreshShortestAudioTrack();
+
+                // Refresh sync if needed.
+                if(audioTrack.masterTrack.synced) audioTrack.masterTrack.refreshSync();
             }
         };
     }
@@ -323,12 +269,6 @@ public class AudioTrackListeners {
         ChangeListener<Duration> newChangeListener = getMediaPlayerCurrentTimeCL(audioTrack);
         audioTrack.mediaPlayerCurrentTimeCL = newChangeListener;
         audioTrack.mediaPlayer.currentTimeProperty().addListener(newChangeListener);
-    }
-
-    static void addMediaPlayerTotalDurationCL(AudioTrack audioTrack){
-        ChangeListener<Duration> newChangeListener = getMediaPlayerTotalDurationCL(audioTrack);
-        audioTrack.mediaPlayerTotalDurationCL = newChangeListener;
-        audioTrack.mediaPlayer.totalDurationProperty().addListener(newChangeListener);
     }
 
     static void addMediaPlayerOnEndOfMediaR(AudioTrack audioTrack){
@@ -381,6 +321,10 @@ public class AudioTrackListeners {
         }
     }
 
+    static void removePPRButtonTextPropertyCL(AudioTrack audioTrack){
+        if(audioTrack.pprButtonTextPropertyCL != null) audioTrack.PPRButton.textProperty().removeListener(audioTrack.pprButtonTextPropertyCL);
+    }
+
     /**
      * Stable listeners are those that are not connected to the parts of an audio track that are likely to change.
      * @param audioTrack
@@ -394,7 +338,6 @@ public class AudioTrackListeners {
     static void addUnstableListeners(AudioTrack audioTrack){
         addPPRButtonOnActionEH(audioTrack);
         addVolumeSliderValuePropertyIL(audioTrack);
-        addMediaPlayerTotalDurationCL(audioTrack);
         addMediaPlayerCurrentTimeCL(audioTrack);
         addMediaPlayerOnEndOfMediaR(audioTrack);
         addMediaPlayerOnReadyR(audioTrack);
@@ -406,26 +349,40 @@ public class AudioTrackListeners {
         addTrackLabelOnMouseClickedEH(audioTrack);
     }
 
+    static void addAllListeners(AudioTrack audioTrack){
+        addStableListeners(audioTrack);
+        addUnstableListeners(audioTrack);
+    }
+
     static void removeStableListeners(AudioTrack audioTrack){
-        audioTrack.audioLabel.removeEventHandler(MouseEvent.MOUSE_CLICKED, audioTrack.audioLabelOnMouseClickedEH);
-        audioTrack.removeTrackButton.removeEventHandler(MouseEvent.MOUSE_CLICKED, audioTrack.removeTrackButtonOnClickEH);
-        audioTrack.PPRButton.textProperty().removeListener(audioTrack.pprButtonTextPropertyCL);
+        if(audioTrack.audioLabelOnMouseClickedEH != null) audioTrack.audioLabel.removeEventHandler(MouseEvent.MOUSE_CLICKED, audioTrack.audioLabelOnMouseClickedEH);
+        if(audioTrack.removeTrackButtonOnClickEH != null) audioTrack.removeTrackButton.removeEventHandler(MouseEvent.MOUSE_CLICKED, audioTrack.removeTrackButtonOnClickEH);
+        if(audioTrack.pprButtonTextPropertyCL != null) audioTrack.PPRButton.textProperty().removeListener(audioTrack.pprButtonTextPropertyCL);
     }
 
     static void removeUnstableListeners(AudioTrack audioTrack){
-        audioTrack.PPRButton.removeEventHandler(ActionEvent.ACTION, audioTrack.pprButtonOnActionEH);
-        audioTrack.volumeSlider.valueProperty().removeListener(audioTrack.volumeSliderValuePropertyIL);
+        if(audioTrack.pprButtonOnActionEH != null) audioTrack.PPRButton.removeEventHandler(ActionEvent.ACTION, audioTrack.pprButtonOnActionEH);
+        if(audioTrack.volumeSliderValuePropertyIL != null) audioTrack.volumeSlider.valueProperty().removeListener(audioTrack.volumeSliderValuePropertyIL);
         if(audioTrack.mediaPlayer != null){
-            audioTrack.mediaPlayer.totalDurationProperty().removeListener(audioTrack.mediaPlayerTotalDurationCL);
-            audioTrack.mediaPlayer.currentTimeProperty().removeListener(audioTrack.mediaPlayerCurrentTimeCL);
-            audioTrack.mediaPlayer.onEndOfMediaProperty().set(null);
-            audioTrack.mediaPlayer.onReadyProperty().set(null);
+            if(audioTrack.mediaPlayerCurrentTimeCL != null) audioTrack.mediaPlayer.currentTimeProperty().removeListener(audioTrack.mediaPlayerCurrentTimeCL);
+            audioTrack.mediaPlayer.onEndOfMediaProperty().set(null); audioTrack.mediaPlayerOnEndOfMediaR = null;
+            audioTrack.mediaPlayer.onReadyProperty().set(null); audioTrack.mediaPlayerOnReadyR = null;
         }
-        audioTrack.timeSlider.valueChangingProperty().removeListener(audioTrack.timeSliderValueChangingCL);
-        audioTrack.timeSlider.valueProperty().removeListener(audioTrack.timeSliderValueCL);
-        audioTrack.timeSlider.removeEventHandler(MouseEvent.MOUSE_CLICKED, audioTrack.timeSliderOnMouseClickedEH);
-        audioTrack.timeSlider.removeEventHandler(MouseEvent.MOUSE_RELEASED, audioTrack.timeSliderOnMouseReleasedEH);
-        audioTrack.timeSlider.removeEventHandler(MouseEvent.MOUSE_DRAGGED, audioTrack.timeSliderOnDragDetectedEH);
-        audioTrack.trackLabel.removeEventHandler(MouseEvent.MOUSE_CLICKED, audioTrack.trackLabelOnMouseClickedEH);
+        if(audioTrack.timeSliderValueChangingCL != null) audioTrack.timeSlider.valueChangingProperty().removeListener(audioTrack.timeSliderValueChangingCL);
+        if(audioTrack.timeSliderValueCL != null) audioTrack.timeSlider.valueProperty().removeListener(audioTrack.timeSliderValueCL);
+        if(audioTrack.timeSliderOnMouseClickedEH != null) audioTrack.timeSlider.removeEventHandler(MouseEvent.MOUSE_CLICKED, audioTrack.timeSliderOnMouseClickedEH);
+        if(audioTrack.timeSliderOnMouseReleasedEH != null) audioTrack.timeSlider.removeEventHandler(MouseEvent.MOUSE_RELEASED, audioTrack.timeSliderOnMouseReleasedEH);
+        if(audioTrack.timeSliderOnDragDetectedEH != null) audioTrack.timeSlider.removeEventHandler(MouseEvent.MOUSE_DRAGGED, audioTrack.timeSliderOnDragDetectedEH);
+        if(audioTrack.trackLabelOnMouseClickedEH != null) audioTrack.trackLabel.removeEventHandler(MouseEvent.MOUSE_CLICKED, audioTrack.trackLabelOnMouseClickedEH);
+    }
+
+    static void removeAllListeners(AudioTrack audioTrack){
+        removeStableListeners(audioTrack);
+        removeUnstableListeners(audioTrack);
+    }
+
+    static void refreshListeners(AudioTrack audioTrack){
+        removeAllListeners(audioTrack);
+        addAllListeners(audioTrack);
     }
 }

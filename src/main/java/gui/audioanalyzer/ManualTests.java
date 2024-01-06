@@ -75,10 +75,20 @@ public class ManualTests {
 
     static void setStateFour(MasterTrack masterTrack){
         addNewTracks(masterTrack, 2);
-        addTestFileToTrack(masterTrack, 2, 1);
+        addTestFileToTrack(masterTrack, 3, 1);
         addTestFileToTrack(masterTrack, 4, 3);
 
         // Press sync.
         // Focus track 1.
     }
+
+    // List of tests
+    // Non-synced audio track tests:
+    // After each, confirm the following are correct:
+    //      Track and master track button texts.
+    //      Outputted audio.
+    //      Current time label.
+    // Let track time slider hit end by playing.
+    // Let track time slider hit end by dragging while media player status is ready, playing, and paused.
+    // Let track time slider hit end by clicking while media player status is ready, playing, and paused.
 }

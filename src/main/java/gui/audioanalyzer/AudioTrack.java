@@ -27,18 +27,6 @@ public class AudioTrack extends Track{
     // Constants.
     static final double REMOVE_TRACK_BUTTON_SIZE = 10.0; // The button is a square. Original value 15.0
 
-    File audioFile;
-    Media media;
-    MediaPlayer mediaPlayer;
-
-    boolean atEndOfMedia = false;
-    boolean isPlaying = false;
-    boolean isMuted = false;
-    double pauseTime;
-    boolean focused = false;
-    boolean synced = false;
-    MasterTrack masterTrack; // The master track that controls this audio track.
-
     // JavaFX objects.
     @FXML
     Label audioLabel;
@@ -49,7 +37,6 @@ public class AudioTrack extends Track{
     EventHandler<ActionEvent> pprButtonOnActionEH;
     ChangeListener<String> pprButtonTextPropertyCL;
     InvalidationListener volumeSliderValuePropertyIL;
-    ChangeListener<Duration> mediaPlayerTotalDurationCL;
     ChangeListener<Boolean> timeSliderValueChangingCL;
     ChangeListener<Number> timeSliderValueCL;
     ChangeListener<Duration> mediaPlayerCurrentTimeCL;
@@ -62,6 +49,22 @@ public class AudioTrack extends Track{
     EventHandler<MouseEvent> removeTrackButtonOnClickEH;
     Runnable mediaPlayerOnReadyR;
 
+    // State tracking fields.
+    boolean isPlaying = false;
+    boolean isMuted = false;
+    boolean atEndOfMedia = false;
+    boolean focused = false;
+    boolean synced = false;
+    double pauseTime;
+
+    // Audio fields.
+    File audioFile;
+    Media media;
+    MediaPlayer mediaPlayer;
+
+    // The master track that controls this audio track.
+    MasterTrack masterTrack;
+
     public AudioTrack(int trackNumber, AudioTrackCoordinates coordinates, MasterTrack masterTrack){
         this.masterTrack = masterTrack;
         this.trackNumber = trackNumber;
@@ -69,6 +72,10 @@ public class AudioTrack extends Track{
 
         initializeTrack();
     }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Setup Methods ------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
 
     void instantiateJavaFXObjects(){
         trackLabel = new Label();
@@ -120,15 +127,6 @@ public class AudioTrack extends Track{
         audioLabel.setText("Add file...");
     }
 
-    void setStateAfterFileChange(){
-        atEndOfMedia = false;
-        isPlaying = false;
-        isMuted = false;
-        pauseTime = 0.0;
-        PPRButton.setText("Play");
-        timeSlider.setValue(0.0);
-    }
-
     @Override
     void initializeTrack(){
         instantiateJavaFXObjects();
@@ -138,71 +136,14 @@ public class AudioTrack extends Track{
         AudioTrackListeners.addStableListeners(AudioTrack.this);
     }
 
-    private void setTheme(){
-        if(controller.darkMode){
-            trackLabel.textFillProperty().set(Color.WHITE);
-            audioLabel.textFillProperty().set(Color.WHITE);
-            lowerVolumeLabel.textFillProperty().set(Color.WHITE);
-            raiseVolumeLabel.textFillProperty().set(Color.WHITE);
-            currentTimeLabel.textFillProperty().set(Color.WHITE);
-            totalTimeLabel.textFillProperty().set(Color.WHITE);
-        }
-    }
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Update File Methods ------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
 
-    public void bindCurrentTimeLabel(){
-        currentTimeLabel.textProperty().bind(Bindings.createStringBinding(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                // Check where the time slider is.
-                if(timeSlider.getValue() == timeSlider.getMax()){
-                    return getTime(mediaPlayer.getTotalDuration()) + " / ";
-                }
-                else if(timeSlider.getValue() == 0.0){
-                    return getTime(mediaPlayer.getStartTime()) + " / ";
-                }
-                else{
-                    return getTime(mediaPlayer.getCurrentTime()) + " / ";
-                }
-            }
-        }, mediaPlayer.currentTimeProperty()));
-    }
-
-    public void labelMatchEndSong(String labelTime, String labelTotalTime){
-        for(int i = 0; i < labelTotalTime.length(); i++){
-            if(labelTime.charAt(i) != labelTotalTime.charAt(i)){
-                atEndOfMedia = false;
-                if(isPlaying){
-                    PPRButton.setText("Pause");
-                    if(masterTrack.synced && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.longestAudioTrack)){
-                        masterTrack.PPRButton.setText("Pause");
-                    }
-                }
-                else{
-                    PPRButton.setText("Play");
-                    if(masterTrack.synced && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.longestAudioTrack)){
-                        masterTrack.PPRButton.setText("Play");
-                    }
-                }
-                return;
-            }
-        }
-        atEndOfMedia = true;
-        PPRButton.setText("Restart");
-        if(masterTrack.synced && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.longestAudioTrack)){
-            masterTrack.PPRButton.setText("Restart");
-        }
-    }
-
-    AudioTrackCoordinates getTrackCoordinates(){
-        return (AudioTrackCoordinates) trackCoordinates;
-    }
-
-    private boolean setTrackAudio(File audioFile){
-        this.audioFile = audioFile;
+    private boolean isValidFile(File file){
         try{
-            media = new Media(this.audioFile.toURI().toString());
-            mediaPlayer = new MediaPlayer(media);
-            audioLabel.setText(audioFile.getName());
+            Media testMedia = new Media(file.toURI().toString());
+            testMedia = null;
             return true;
         }
         catch(MediaException e){
@@ -219,16 +160,24 @@ public class AudioTrack extends Track{
         updateFile(fileChooser.showOpenDialog(new Stage()));
     }
 
-    private void addNewAudioFile(File newFile){
-        boolean setAudioStatus = setTrackAudio(newFile);
-        if(setAudioStatus){
-            // Bidirectionally bind volume slider value to volume property of media player.
-            mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
-            bindCurrentTimeLabel();
+    private void setTrackAudio(File audioFile){
+        media = new Media(audioFile.toURI().toString());
+        mediaPlayer = new MediaPlayer(media);
+        this.audioFile = audioFile;
+    }
 
-            // Add listeners.
-            AudioTrackListeners.addUnstableListeners(AudioTrack.this);
-        }
+    private void addNewAudioFile(File newFile){
+        // Add media.
+        setTrackAudio(newFile);
+
+        // Bidirectionally bind volume slider value to volume property of media player.
+        mediaPlayer.volumeProperty().bindBidirectional(volumeSlider.valueProperty());
+
+        // Add listeners.
+        AudioTrackListeners.addUnstableListeners(AudioTrack.this);
+
+        // Only add tracks with valid files to sorted list.
+        masterTrack.audioTracksSortedByDuration.add(AudioTrack.this);
     }
 
     private void changeAudioFile(File newFile){
@@ -238,62 +187,29 @@ public class AudioTrack extends Track{
         // Unbind properties.
         mediaPlayer.volumeProperty().unbindBidirectional(volumeSlider.valueProperty());
         volumeSlider.valueProperty().unbindBidirectional(mediaPlayer.volumeProperty());
-        currentTimeLabel.textProperty().unbind(); // Need to rebind with bindCurrentTimeLabel()?
+        currentTimeLabel.textProperty().unbind();
 
         // Update media.
         setTrackAudio(newFile);
-
-        // Refresh listeners.
-        AudioTrackListeners.removeUnstableListeners(AudioTrack.this);
-        AudioTrackListeners.addUnstableListeners(AudioTrack.this);
-
-        // Set default values.
-        setStateAfterFileChange();
     }
 
     void updateFile(File newFile){
-        if(newFile == null) return;
+        if(newFile == null || !isValidFile(newFile)) return;
 
-        // Unsync if needed.
-        boolean synced = false;
-        if(masterTrack.synced){
-            masterTrack.syncButton.fire();
-            synced = true;
-        }
-
+        TrackUtilities.resetAllTracks(masterTrack);
         if(trackHasFile()){
             changeAudioFile(newFile);
         }
         else {
             addNewAudioFile(newFile);
         }
-
-        // Resync if needed.
-        if(synced){
-            masterTrack.timeSlider.setValue(0.0);
-            masterTrack.syncButton.fire();
-        }
-        else {
-            refreshDisabledStatus();
-        }
-        masterTrack.refreshDisabledStatus();
+        AudioTrackListeners.refreshListeners(AudioTrack.this);
+        TrackUtilities.resetAllTracks(masterTrack);
     }
 
-    void refreshDisabledStatus(){
-        if(trackHasFile()){
-            PPRButton.setDisable(false);
-            timeSlider.setDisable(false);
-            volumeSlider.setDisable(false);
-        }
-        else{
-            PPRButton.setText("Play");
-            PPRButton.setDisable(true);
-            timeSlider.setValue(0.0);
-            timeSlider.setDisable(true);
-            volumeSlider.setValue(1.0);
-            volumeSlider.setDisable(true);
-        }
-    }
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Focusing Methods ---------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
 
     /**
      * Focuses this audio track.
@@ -311,7 +227,21 @@ public class AudioTrack extends Track{
         if(masterTrack.synced){
             MasterTrackListeners.bindSliderValueProperties(masterTrack.volumeSlider, volumeSlider);
         }
-        masterTrack.setSwitchDisabled();
+        masterTrack.refreshSwitchDisabledStatus();
+    }
+
+    void undoFocus(){
+        focused = false;
+        trackLabel.borderProperty().set(null);
+        for(AudioTrack track: masterTrack.audioTracks){
+            if(track.trackNumber != trackNumber){
+                track.volumeSlider.setValue(1.0);
+                if(masterTrack.synced && track.trackHasFile()){
+                    MasterTrackListeners.bindSliderValueProperties(track.volumeSlider, masterTrack.volumeSlider);
+                }
+            }
+        }
+        masterTrack.refreshSwitchDisabledStatus();
     }
 
     private void setTrackInFocus(AudioTrack track){
@@ -323,31 +253,17 @@ public class AudioTrack extends Track{
         else{
             track.trackLabel.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
         }
-        // if(!masterTrack.synced) track.volumeSlider.setDisable(false);
     }
 
     private void setTrackOutOfFocus(AudioTrack track){
         track.volumeSlider.setValue(0.0);
         track.focused = false;
         track.trackLabel.borderProperty().set(null);
-        // if(!masterTrack.synced) track.volumeSlider.setDisable(true);
     }
 
-    void undoFocus(){
-        focused = false;
-        trackLabel.borderProperty().set(null);
-        for(AudioTrack track: masterTrack.audioTracks){
-            if(track.trackNumber != trackNumber){
-                // Bind the volume slider of all non-focused tracks.
-                // if(!masterTrack.synced) track.volumeSlider.setDisable(false);
-                track.volumeSlider.setValue(1.0);
-                if(masterTrack.synced && track.trackHasFile()){
-                    MasterTrackListeners.bindSliderValueProperties(track.volumeSlider, masterTrack.volumeSlider);
-                }
-            }
-        }
-        masterTrack.setSwitchDisabled();
-    }
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- GUI Methods --------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
 
     /**
      * Moves the coordinates of all GUI objects of this track up by one track size.
@@ -377,8 +293,117 @@ public class AudioTrack extends Track{
         }
     }
 
+    private void setTheme(){
+        if(controller.darkMode){
+            trackLabel.textFillProperty().set(Color.WHITE);
+            audioLabel.textFillProperty().set(Color.WHITE);
+            lowerVolumeLabel.textFillProperty().set(Color.WHITE);
+            raiseVolumeLabel.textFillProperty().set(Color.WHITE);
+            currentTimeLabel.textFillProperty().set(Color.WHITE);
+            totalTimeLabel.textFillProperty().set(Color.WHITE);
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Utility Methods ----------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
+
+    public void bindCurrentTimeLabel(){
+        currentTimeLabel.textProperty().bind(Bindings.createStringBinding(new Callable<String>() {
+            @Override
+            public String call() {
+                // Check where the time slider is.
+                if(timeSlider.getValue() == timeSlider.getMax()){
+                    if(masterTrack.synced){
+                        return getTime(masterTrack.shortestAudioTrack.mediaPlayer.getTotalDuration()) + " / ";
+                    }
+                    else{
+                        return getTime(mediaPlayer.getTotalDuration()) + " / ";
+                    }
+                }
+                else if(timeSlider.getValue() == 0.0){
+                    return getTime(mediaPlayer.getStartTime()) + " / ";
+                }
+                else{
+                    return getTime(mediaPlayer.getCurrentTime()) + " / ";
+                }
+            }
+        }, mediaPlayer.currentTimeProperty()));
+    }
+
+    void labelMatchEndSong(String labelTime, String labelTotalTime){
+        boolean updateMasterPPRText = false;
+        if(masterTrack.synced && masterTrack.shortestAudioTrack != null && TrackUtilities.trackEquals(AudioTrack.this, masterTrack.shortestAudioTrack)){
+            updateMasterPPRText = true;
+        }
+
+        if(!updateMasterPPRText){
+            if(masterTrack.synced) return;
+            for(int i = 0; i < labelTotalTime.length(); i++){
+                if(labelTime.charAt(i) != labelTotalTime.charAt(i)){
+                    atEndOfMedia = false;
+                    if(isPlaying){
+                        PPRButton.setText("Pause");
+                    }
+                    else{
+                        PPRButton.setText("Play");
+                    }
+                    return;
+                }
+            }
+            atEndOfMedia = true;
+            PPRButton.setText("Restart");
+            return;
+        }
+        else{
+            for(int i = 0; i < labelTotalTime.length(); i++){
+                if(labelTime.charAt(i) != labelTotalTime.charAt(i)){
+                    atEndOfMedia = false;
+                    if(isPlaying){
+                        PPRButton.setText("Pause");
+                        // masterTrack.PPRButton.setText("Pause");
+                    }
+                    else{
+                        PPRButton.setText("Play");
+                        // masterTrack.PPRButton.setText("Play");
+                    }
+                    return;
+                }
+            }
+            atEndOfMedia = true;
+            PPRButton.setText("Restart");
+            // masterTrack.PPRButton.setText("Restart");
+            return;
+        }
+    }
+
+    AudioTrackCoordinates getTrackCoordinates(){
+        return (AudioTrackCoordinates) trackCoordinates;
+    }
+
     boolean trackHasFile(){
         return (audioFile != null) && (media != null) && (mediaPlayer != null);
+    }
+
+    void playTrack(){
+        mediaPlayer.seek(Duration.seconds(pauseTime));
+        mediaPlayer.play();
+        PPRButton.setText("Pause");
+        isPlaying = true;
+    }
+
+    void pauseTrack(){
+        mediaPlayer.pause();
+        pauseTime = mediaPlayer.getCurrentTime().toSeconds();
+        PPRButton.setText("Play");
+        isPlaying = false;
+    }
+
+    void restartTrack(){
+        pauseTime = 0.0;
+        timeSlider.setValue(0.0);
+        playTrack();
+        atEndOfMedia = false;
     }
 
     void printState(){

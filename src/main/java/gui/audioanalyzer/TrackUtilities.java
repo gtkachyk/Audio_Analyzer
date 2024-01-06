@@ -1,7 +1,6 @@
 package gui.audioanalyzer;
 
 import javafx.scene.control.Button;
-
 import java.util.ArrayList;
 
 /**
@@ -35,7 +34,7 @@ public class TrackUtilities {
 
     static boolean isSomeTrackPlaying(ArrayList<AudioTrack> tracks){
         for(AudioTrack track: tracks){
-            if(track.isPlaying) return true;
+            if(track.PPRButton.getText().equals("Pause")) return true;
         }
         return false;
     }
@@ -74,10 +73,6 @@ public class TrackUtilities {
         }
     }
 
-    static boolean canRemoveTrack(AudioTrack track){
-        return !track.synced && !track.focused;
-    }
-
     /**
      * Determines if two tracks are equal.
      * @param trackOne The first track to compare.
@@ -110,6 +105,23 @@ public class TrackUtilities {
         }
     }
 
+    static boolean removeTrackByNumber(ArrayList<AudioTrack> tracks, int trackNumber){
+        for(int i = 0; i < tracks.size(); i++){
+            if(tracks.get(i).trackNumber == trackNumber){
+                tracks.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static AudioTrack getAudioTrackByNumber(MasterTrack masterTrack, int trackNumber){
+        for(AudioTrack track: masterTrack.audioTracks){
+            if(track.trackNumber == trackNumber) return track;
+        }
+        return null;
+    }
+
     static void forceFire(Button button){
         if(button.isDisable()){
             button.setDisable(false);
@@ -119,6 +131,63 @@ public class TrackUtilities {
         else{
             button.fire();
         }
+    }
+
+    /**
+     * Nuclear option.
+     * @param masterTrack
+     */
+    static void resetAllTracks(MasterTrack masterTrack){
+        masterTrack.PPRButton.setText("Play");
+        masterTrack.focusTrackLabel.setText("Focus Track: None");
+        masterTrack.timeSlider.setValue(0.0);
+        masterTrack.volumeSlider.setValue(1.0);
+        for(AudioTrack track: masterTrack.audioTracks){
+            if(track.trackHasFile()){
+                track.mediaPlayer.seek(track.mediaPlayer.getStartTime());
+                track.mediaPlayer.pause();
+            }
+            track.atEndOfMedia = false;
+            track.isPlaying = false;
+            track.isMuted = false;
+            track.focused = false;
+            track.pauseTime = 0.0;
+            track.timeSlider.setValue(0.0);
+            track.volumeSlider.setValue(1.0);
+            track.PPRButton.setText("Play");
+            track.trackLabel.borderProperty().set(null);
+        }
+
+        refreshDisabledStatus(masterTrack);
+    }
+
+    static void refreshDisabledStatus(MasterTrack masterTrack){
+        if(someTrackHasFile(masterTrack.audioTracks)){
+            masterTrack.PPRButton.setDisable(false);
+            masterTrack.timeSlider.setDisable(false);
+            masterTrack.volumeSlider.setDisable(false);
+        }
+        else{
+            masterTrack.PPRButton.setDisable(true);
+            masterTrack.timeSlider.setDisable(true);
+            masterTrack.volumeSlider.setDisable(true);
+        }
+
+        for(AudioTrack track: masterTrack.audioTracks){
+            if(track.trackHasFile() && !masterTrack.synced){
+                track.PPRButton.setDisable(false);
+                track.timeSlider.setDisable(false);
+                track.volumeSlider.setDisable(false);
+            }
+            else{
+                track.PPRButton.setDisable(true);
+                track.timeSlider.setDisable(true);
+                track.volumeSlider.setDisable(true);
+            }
+        }
+
+        masterTrack.refreshSwitchDisabledStatus();
+        masterTrack.refreshSyncDisabledStatus();
     }
 
     static void printAllVolumeSliderValues(ArrayList<AudioTrack> tracks){

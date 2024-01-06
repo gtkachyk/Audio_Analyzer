@@ -1,5 +1,6 @@
 package gui.audioanalyzer;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -7,6 +8,7 @@ import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
 public class MasterTrackListeners {
@@ -95,6 +97,7 @@ public class MasterTrackListeners {
         return new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                TrackUtilities.resetAllTracks(masterTrack);
                 if(masterTrack.synced){
                     addTimeSliderChangeListener(masterTrack);
                     masterTrack.syncButton.setText("Sync");
@@ -103,41 +106,11 @@ public class MasterTrackListeners {
                 }
                 else{
                     removeTimeSliderChangeListener(masterTrack);
-
-//                    if(masterTrack.timeSlider.getValue() == masterTrack.timeSlider.getMax()){
-//                        for(AudioTrack track: masterTrack.audioTracks){
-//                            if(track.trackHasFile()){
-//                                System.out.println("BEFORE");
-//                                TrackUtilities.printAllTrackStates(masterTrack.audioTracks);
-//                                track.pauseTime = track.mediaPlayer.getTotalDuration().toSeconds();
-//                                track.mediaPlayer.seek(track.mediaPlayer.getTotalDuration());
-//                                track.timeSlider.setValue(track.timeSlider.getMax());
-//                                System.out.println("AFTER");
-//                                TrackUtilities.printAllTrackStates(masterTrack.audioTracks);
-//                            }
-//                        }
-//                    }
-
                     masterTrack.syncButton.setText("Unlock");
                     masterTrack.synced = true;
                     masterTrack.sync();
                 }
-
-                masterTrack.refreshPPRText();
-
-                // Refocus focused track if one exists.
-                for(AudioTrack track: masterTrack.audioTracks){
-                    if(track.focused){
-                        track.focusTrack();
-                    }
-                }
-
-                // If some track is playing at the time of sync, play the remaining tracks.
-                if(TrackUtilities.isSomeTrackPlaying(masterTrack.audioTracks)){
-                    for(AudioTrack track: masterTrack.audioTracks){
-                        if(!track.isPlaying) TrackUtilities.forceFire(track.PPRButton);
-                    }
-                }
+                TrackUtilities.resetAllTracks(masterTrack);
             }
         };
     }
@@ -147,7 +120,7 @@ public class MasterTrackListeners {
             @Override
             public void handle(ActionEvent actionEvent) {
                 masterTrack.numberOfAudioTracks++;
-                if(masterTrack.numberOfAudioTracks >= masterTrack.MAX_TRACKS){
+                if(masterTrack.numberOfAudioTracks >= MasterTrack.MAX_TRACKS){
                     masterTrack.addTrackButton.setDisable(true);
                 }
                 AudioTrack audioTrack = new AudioTrack(masterTrack.numberOfAudioTracks, new AudioTrackCoordinates(masterTrack.numberOfAudioTracks), masterTrack);
@@ -185,38 +158,76 @@ public class MasterTrackListeners {
             @Override
             public void handle(ActionEvent actionEvent) {
                 if(masterTrack.PPRButton.getText().equals("Pause")){
-                    for(AudioTrack track: masterTrack.audioTracks){
-                        if(track.trackHasFile() && track.isPlaying){
-                            // Pause all playing tracks.
-                            if(!track.PPRButton.getText().equals("Restart")) TrackUtilities.forceFire(track.PPRButton);
+                    if(masterTrack.synced){
+                        for(AudioTrack track: masterTrack.audioTracks){
+                            if(track.trackHasFile()){
+                                if(track.isPlaying){
+                                    if(!track.PPRButton.getText().equals("Restart")){
+                                        track.pauseTrack();
+                                    }
+                                    else{
+                                        track.isPlaying = false;
+                                        track.atEndOfMedia = true;
+                                        track.mediaPlayer.pause();
+                                        track.pauseTime = track.mediaPlayer.getTotalDuration().toSeconds();
+                                    }
+                                }
+                            }
                         }
                     }
-                    masterTrack.PPRButton.setText("Play");
+                    else{
+                        for(AudioTrack track: masterTrack.audioTracks){
+                            if(track.trackHasFile() && track.isPlaying){
+                                TrackUtilities.forceFire(track.PPRButton);
+                            }
+                        }
+                    }
+                    masterTrack.refreshPPRText();
                 }
                 else if(masterTrack.PPRButton.getText().equals("Play")){
-                    for(AudioTrack track: masterTrack.audioTracks){
-                        if(track.trackHasFile() && !track.isPlaying){
-                            // Play all paused tracks.
-                            if(!track.PPRButton.getText().equals("Restart")) TrackUtilities.forceFire(track.PPRButton);
+                    if(masterTrack.synced){
+                        for(AudioTrack track: masterTrack.audioTracks){
+                            if(track.trackHasFile()){
+                                if(!track.isPlaying){
+                                    if(!track.PPRButton.getText().equals("Restart")){
+                                        track.playTrack();
+                                    }
+                                    else{
+                                        track.mediaPlayer.seek(Duration.seconds(track.pauseTime));
+                                        track.mediaPlayer.play();
+                                        track.isPlaying = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        for(AudioTrack track: masterTrack.audioTracks){
+                            if(track.trackHasFile() && !track.isPlaying){
+                                TrackUtilities.forceFire(track.PPRButton);
+                            }
                         }
                     }
                     masterTrack.PPRButton.setText("Pause");
                 }
                 else if(masterTrack.PPRButton.getText().equals("Restart")){
-                    masterTrack.timeSlider.setValue(0.0);
-
-                    for(AudioTrack track: masterTrack.audioTracks){
-                        if(track.trackHasFile()){
-                            track.atEndOfMedia = false;
-                            track.isPlaying = true;
-                            track.pauseTime = 0.0;
-                            track.mediaPlayer.seek(new Duration(0.0));
-                            track.mediaPlayer.play();
+                    if(masterTrack.synced){
+                        masterTrack.timeSlider.setValue(0.0);
+                        for(AudioTrack track: masterTrack.audioTracks){
+                            if(track.trackHasFile()){
+                                track.pauseTime = 0.0;
+                            }
+                        }
+                        masterTrack.PPRButton.setText("Play");
+                        masterTrack.PPRButton.fire();
+                    }
+                    else{
+                        for(AudioTrack track: masterTrack.audioTracks){
+                            if(track.trackHasFile()){
+                                track.PPRButton.fire();
+                            }
                         }
                     }
-
-                    masterTrack.PPRButton.setText("Play");
-                    masterTrack.PPRButton.fire();
                 }
                 else if(masterTrack.PPRButton.getText().equals("Press All")){
                     for(AudioTrack track: masterTrack.audioTracks){

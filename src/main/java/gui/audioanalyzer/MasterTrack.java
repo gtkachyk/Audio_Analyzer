@@ -1,6 +1,5 @@
 package gui.audioanalyzer;
 
-import gui.audioanalyzer.exceptions.TrackRemoveException;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -37,7 +36,7 @@ public class MasterTrack extends Track {
     boolean synced = false;
     ArrayList<AudioTrack> audioTracks = new ArrayList<>(); // Track #n = audioTracks.get(n - 1).
     ArrayList<AudioTrack> audioTracksSortedByDuration = new ArrayList<>(); // Sorted by increasing order of MediaPlayer duration.
-    AudioTrack longestAudioTrack = null;
+    AudioTrack shortestAudioTrack = null;
     int numberOfAudioTracks = 0;
 
     ChangeListener<Number> timeSliderChangeListener;
@@ -102,11 +101,20 @@ public class MasterTrack extends Track {
         raiseVolumeLabel.setText("+");
         totalTimeLabel.setText("00:00");
         switchButton.setText("Switch");
+        switchButton.setDisable(true);
         addTrackButton.setText("Add Track");
         debugReportButton.setText("Set State");
-        setGUIDefaultState();
-        debugReportButton.setVisible(true); // Set to true to debug.
+        timeSlider.setValue(0.0);
+        timeSlider.setDisable(true);
+        PPRButton.setText("Play");
+        PPRButton.setDisable(true);
+        syncButton.setText("Sync");
+        syncButton.setDisable(true);
+        volumeSlider.setValue(1.0);
+        volumeSlider.setDisable(true);
+        currentTimeLabel.setText("00:00 /");
 
+        debugReportButton.setVisible(true); // Set to true to debug.
     }
 
     @Override
@@ -138,11 +146,15 @@ public class MasterTrack extends Track {
         }
     }
 
-    private void syncTrack(AudioTrack track){
-        // Bind master currentTimeLabel to track if track is longest.
+    void syncTrack(AudioTrack track){
+        // Bind master currentTimeLabel to track if track is shortest.
         // System.out.println("In syncTrack(): track.trackNumber = " + track.trackNumber + ", longestAudioTrack.trackNumber = " + longestAudioTrack.trackNumber);
-        if(track.trackNumber == longestAudioTrack.trackNumber){
+        if(TrackUtilities.trackEquals(track, shortestAudioTrack)){
             MasterTrackListeners.bindLabelTextProperties(currentTimeLabel, track.currentTimeLabel);
+        }
+        else {
+            track.timeSlider.setMax(shortestAudioTrack.timeSlider.getMax());
+            AudioTrackListeners.removePPRButtonTextPropertyCL(track);
         }
 
         // Update pause time so newly synced tracks snap to the master track time slider before playing for the first time.
@@ -171,10 +183,14 @@ public class MasterTrack extends Track {
         }
     }
 
-    private void unSyncTrack(AudioTrack track){
-        if(track.trackNumber == longestAudioTrack.trackNumber){
+    void unSyncTrack(AudioTrack track){
+        track.timeSlider.setMax(track.mediaPlayer.getTotalDuration().toSeconds());
+        AudioTrackListeners.addPPRButtonTextPropertyCL(track); // Potentially duplicate add if shortest track has not changed.
+
+        if(TrackUtilities.trackEquals(track, shortestAudioTrack)){
             currentTimeLabel.textProperty().unbind();
         }
+
         timeSlider.valueProperty().unbindBidirectional(track.timeSlider.valueProperty());
         volumeSlider.valueProperty().unbindBidirectional(track.volumeSlider.valueProperty());
         track.timeSlider.valueProperty().unbindBidirectional(timeSlider.valueProperty());
@@ -197,14 +213,13 @@ public class MasterTrack extends Track {
     // ------------------------------------------------------------------------------------------------------------
 
     void removeAudioTrack(AudioTrack track){
+        TrackUtilities.resetAllTracks(MasterTrack.this);
         int removedTrackNumber = track.trackNumber;
-        try{
-            removeAudioTrackBackendAdjust(track);
-        }
-        catch (TrackRemoveException e){
-            e.printStackTrace();
-        }
+        removeFromAudioTracks(track);
         removeAudioTrackGUIAdjust(track, removedTrackNumber);
+        TrackUtilities.resetAllTracks(MasterTrack.this);
+
+        if(synced) refreshSync();
     }
 
     private void removeAudioTrackGUIAdjust(AudioTrack track, int removedTrackNumber){
@@ -216,79 +231,6 @@ public class MasterTrack extends Track {
         if(numberOfAudioTracks < MAX_TRACKS){
             addTrackButton.setDisable(false);
         }
-        refreshDisabledStatus();
-    }
-
-    private void removeAudioTrackBackendAdjust(AudioTrack track) throws TrackRemoveException {
-        boolean oldSynced = synced;
-        prepareTrackForRemoval(track);
-
-        // Special case: The track to remove has no file.
-        if(!track.trackHasFile()){
-            removeEmptyTrack(track);
-            return;
-        }
-
-        // Special case: The last track is removed.
-        if(audioTracks.size() == 1){
-            removeLastTrack(track);
-            return;
-        }
-
-        if(TrackUtilities.trackEquals(track, longestAudioTrack)){
-            removeLongestTrack(track);
-        }
-        else{
-            removeFromAudioTracks(track);
-        }
-        refreshFocusState();
-
-        if(oldSynced){
-            syncButton.fire();
-        }
-    }
-
-    /**
-     * Prepares an AudioTrack to be removed from audioTracks.
-     * @param track The track to prepare.
-     */
-    private void prepareTrackForRemoval(AudioTrack track){
-        if(synced) syncButton.fire();
-        if(track.focused) track.undoFocus();
-        if(track.mediaPlayer != null) track.mediaPlayer.stop();
-    }
-
-    /**
-     * Removes an empty track from the back end.
-     * @param track The empty track to remove.
-     */
-    private void removeEmptyTrack(AudioTrack track) throws TrackRemoveException {
-        if(!TrackUtilities.canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove empty track");
-        removeFromAudioTracks(track);
-    }
-
-    /**
-     * Removes the only track from the backend.
-     * @param track The last track to remove.
-     */
-    private void removeLastTrack(AudioTrack track) throws TrackRemoveException {
-        if(!TrackUtilities.canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove empty track");
-        if(PPRButton.getText().equals("Pause")) PPRButton.fire();
-        if(synced){
-            syncButton.fire();
-        }
-        removeFromAudioTracks(track);
-    }
-
-    private void removeLongestTrack(AudioTrack track) throws TrackRemoveException {
-        if(!TrackUtilities.canRemoveTrack(track)) throw new TrackRemoveException("Cannot remove longest track");
-        removeFromAudioTracks(track);
-
-        // Resync the longest track if needed.
-        // This is needed to rebind (unidirectional) the master track currentTimeLabel to the new longest track.
-        if(synced && longestAudioTrack != null){
-            MasterTrackListeners.bindLabelTextProperties(currentTimeLabel, longestAudioTrack.currentTimeLabel);
-        }
     }
 
     private void removeFromAudioTracks(AudioTrack track){
@@ -298,9 +240,11 @@ public class MasterTrack extends Track {
 
         // Remove the track from the sorted list and update the longest track.
         audioTracksSortedByDuration.remove(track);
-        refreshLongestAudioTrack();
+        refreshShortestAudioTrack();
 
         numberOfAudioTracks--;
+
+        AudioTrackListeners.removeAllListeners(track);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -315,49 +259,20 @@ public class MasterTrack extends Track {
         }
     }
 
-    void refreshLongestAudioTrack(){
+    void refreshShortestAudioTrack(){
         if(audioTracksSortedByDuration.size() > 0){
             TrackUtilities.sortAudioTracksByDuration(audioTracksSortedByDuration);
-            longestAudioTrack = audioTracksSortedByDuration.get(audioTracksSortedByDuration.size() - 1);
+            shortestAudioTrack = audioTracksSortedByDuration.get(0);
 
             // These properties don't need to be bound with formal bindings.
-            totalTimeLabel.setText(longestAudioTrack.totalTimeLabel.getText());
-            timeSlider.setMax(longestAudioTrack.timeSlider.getMax());
+            totalTimeLabel.setText(shortestAudioTrack.totalTimeLabel.getText());
+            timeSlider.setMax(shortestAudioTrack.mediaPlayer.getTotalDuration().toSeconds());
         }
         else{
-            longestAudioTrack = null;
+            shortestAudioTrack = null;
             totalTimeLabel.setText("00:00");
             timeSlider.setMax(TIME_SLIDER_DEFAULT_MAX);
         }
-    }
-
-    void refreshDisabledStatus(){
-        if(TrackUtilities.someTrackHasFile(audioTracks)){
-            setGUIActiveState();
-        }
-        else{
-            setGUIDefaultState();
-            synced = false;
-        }
-        setSwitchDisabled();
-    }
-
-    void setGUIActiveState(){
-        PPRButton.setDisable(false);
-        syncButton.setDisable(false);
-        timeSlider.setDisable(false);
-        volumeSlider.setDisable(false);
-    }
-
-    void setGUIDefaultState(){
-        timeSlider.setValue(0.0);
-        timeSlider.setDisable(true);
-        PPRButton.setText("Play");
-        PPRButton.setDisable(true);
-        syncButton.setText("Sync");
-        volumeSlider.setValue(1.0);
-        volumeSlider.setDisable(true);
-        currentTimeLabel.setText("00:00 /");
     }
 
     void refreshFocus(){
@@ -368,15 +283,7 @@ public class MasterTrack extends Track {
         }
     }
 
-    private void refreshUnFocus(){
-        for(AudioTrack track: audioTracks){
-            if(!track.focused) {
-                track.undoFocus();
-            }
-        }
-    }
-
-    void setSwitchDisabled(){
+    void refreshSwitchDisabledStatus(){
         if(!TrackUtilities.isSomeTrackFocused(audioTracks)){
             switchButton.setDisable(true);
         }
@@ -391,6 +298,17 @@ public class MasterTrack extends Track {
         }
     }
 
+    void refreshSyncDisabledStatus(){
+        if(TrackUtilities.someTrackHasFile(audioTracks)){
+            syncButton.setDisable(false);
+        }
+        else{
+            syncButton.setDisable(true);
+            syncButton.setText("Sync");
+            synced = false;
+        }
+    }
+
     private void setSeparatorVisibilities(){
         for(Track audioTrack: audioTracks){
             if(audioTrack.trackNumber == audioTracks.size()){
@@ -402,20 +320,23 @@ public class MasterTrack extends Track {
         }
     }
 
-   private void refreshFocusState(){
-        if(TrackUtilities.isSomeTrackFocused(audioTracks)){
-            refreshFocus();
-        }
-        else{
-            refreshUnFocus();
-        }
-        setSwitchDisabled();
-    }
-
     void refreshPPRText(){
+        if(synced){
+            if(TrackUtilities.isSomeTrackPlaying(audioTracks)){
+                PPRButton.setText("Pause");
+            }
+            else{
+                PPRButton.setText("Play");
+            }
+            return;
+        }
+
+        // Out of all tracks with files, find out how many are playing, paused, and finished.
+        int nonEmptyTracks = audioTracks.size() - TrackUtilities.emptyTracks(audioTracks);
         int finishedTracks = 0;
         int playingTracks = 0;
         int pausedTracks = 0;
+
         for(AudioTrack track: audioTracks){
             if(track.trackHasFile()){
                 if(track.PPRButton.getText().equals("Play")){
@@ -429,24 +350,19 @@ public class MasterTrack extends Track {
                 }
             }
         }
-        int nonEmptyTracks = audioTracks.size() - TrackUtilities.emptyTracks(audioTracks);
-        if(finishedTracks == nonEmptyTracks){
-            PPRButton.setText("Restart");
+        if(pausedTracks == nonEmptyTracks){
+            PPRButton.setText("Play");
         }
         else if(playingTracks == nonEmptyTracks){
             PPRButton.setText("Pause");
         }
-        else if(pausedTracks == nonEmptyTracks){
-            PPRButton.setText("Play");
+        else if(finishedTracks == nonEmptyTracks){
+            PPRButton.setText("Restart");
         }
-        else{
-            if(synced && TrackUtilities.isSomeTrackPlaying(audioTracks)){
-                PPRButton.setText("Pause");
-            }
-            else{
-                PPRButton.setText("Press All");
-            }
+        else {
+            PPRButton.setText("Press All");
         }
+//        System.out.println("masterTrack.PPRButton text set to " + PPRButton.getText() + " in MasterTrack.refreshPPRText()");
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -464,5 +380,4 @@ public class MasterTrack extends Track {
     MasterTrackCoordinates getTrackCoordinates(){
         return (MasterTrackCoordinates) trackCoordinates;
     }
-
 }
