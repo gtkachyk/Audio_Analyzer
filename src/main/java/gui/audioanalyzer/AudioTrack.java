@@ -313,6 +313,7 @@ public class AudioTrack extends Track{
     void playTrack(){
         mediaPlayer.seek(Duration.seconds(pauseTime));
         mediaPlayer.play();
+        // System.out.println("Playing track " + trackNumber + " from time " + pauseTime);
         PPRButton.setText("Pause");
         isPlaying = true;
     }
@@ -320,6 +321,7 @@ public class AudioTrack extends Track{
     void pauseTrack(){
         mediaPlayer.pause();
         pauseTime = mediaPlayer.getCurrentTime().toSeconds();
+        // System.out.println("Set pause time of track " + trackNumber + " to " + pauseTime);
         PPRButton.setText("Play");
         isPlaying = false;
     }

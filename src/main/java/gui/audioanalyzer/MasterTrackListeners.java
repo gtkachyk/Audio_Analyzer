@@ -252,12 +252,8 @@ public class MasterTrackListeners {
                     System.out.println("");
                 }
                 else if(masterTrack.debugReportButton.getText().equals("Set State")){
-                    ManualTests.setStateFour(masterTrack);
+                    ManualTests.setState(masterTrack);
                     masterTrack.debugReportButton.setText("Debug");
-                }
-                else if(masterTrack.debugReportButton.getText().equals("Test")){
-                    ManualTests.checkStateThree(masterTrack);
-                    masterTrack.debugReportButton.setText("Set State");
                 }
             }
         };

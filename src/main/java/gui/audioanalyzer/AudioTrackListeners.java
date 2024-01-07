@@ -12,7 +12,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
-
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
@@ -98,6 +97,12 @@ public class AudioTrackListeners {
         };
     }
 
+    /**
+     * Media player will not seek to time slider value unless it changes by more than 0.5.
+     * This is so it does not seek during normal playing, unless the time slider is dragged or clicked.
+     * @param audioTrack
+     * @return
+     */
     private static ChangeListener<Number> getTimeSliderValueCL(AudioTrack audioTrack){
         return new ChangeListener<Number>() {
             @Override
@@ -112,15 +117,28 @@ public class AudioTrackListeners {
         };
     }
 
+    /**
+     * This is where the time slider value gets set during normal playing.
+     * @param audioTrack
+     * @return
+     */
+    // TODO: Fix bug: With long files, the media player will rewind a few seconds every time it is played if the time slider is not far enough from the start.
     private static ChangeListener<Duration> getMediaPlayerCurrentTimeCL(AudioTrack audioTrack){
         return new ChangeListener<Duration>() {
             @Override
             public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTime, Duration newTime) {
                 bindCurrentTimeLabel(audioTrack);
                 if(!audioTrack.timeSlider.isValueChanging()){
-                    if(audioTrack.timeSlider.getValue() != audioTrack.timeSlider.getMax()){ // This is needed to address a bug that likely involves the pauseTime mechanic.
-                        audioTrack.timeSlider.setValue(newTime.toSeconds());
-                    }
+//                    if(audioTrack.timeSlider.getValue() != audioTrack.timeSlider.getMax()){ // This is needed to address a bug that likely involves the pauseTime mechanic.
+//                        audioTrack.timeSlider.setValue(newTime.toSeconds());
+//                    }
+//                    if((oldTime.toSeconds() / audioTrack.mediaPlayer.getTotalDuration().toSeconds()) < 0.01){
+//                        audioTrack.timeSlider.setValue(oldTime.toSeconds() + 0.1);
+//                    }
+//                    else{
+//                        audioTrack.timeSlider.setValue(newTime.toSeconds());
+//                    }
+                    audioTrack.timeSlider.setValue(newTime.toSeconds());
                 }
                 TrackUtilities.compareTimeLabels(audioTrack);
             }
