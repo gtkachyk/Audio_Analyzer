@@ -1,8 +1,8 @@
 package gui.audioanalyzer;
 
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -14,6 +14,7 @@ import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
 import java.util.Optional;
+import java.util.concurrent.Callable;
 
 public class AudioTrackListeners {
 
@@ -21,8 +22,8 @@ public class AudioTrackListeners {
         return new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                if(!audioTrack.trackHasFile()) return;
-                audioTrack.bindCurrentTimeLabel();
+                if(!TrackUtilities.trackHasFile(audioTrack)) return;
+                bindCurrentTimeLabel(audioTrack);
                 if(audioTrack.atEndOfMedia){
                     audioTrack.restartTrack();
                     return;
@@ -43,14 +44,14 @@ public class AudioTrackListeners {
             public void changed(ObservableValue<? extends String> observableValue, String oldValue, String newValue) {
                 // This is used to update the master PPR text when the tracks aren't synced.
                 if(!audioTrack.masterTrack.synced){
-                    audioTrack.masterTrack.refreshPPRText();
+                    TrackUtilities.refreshMasterPPRText(audioTrack.masterTrack);
                 }
                 else{
                     if(TrackUtilities.trackEquals(audioTrack, audioTrack.masterTrack.shortestAudioTrack)){
                         audioTrack.masterTrack.PPRButton.setText(newValue);
                     }
                     for(AudioTrack track: audioTrack.masterTrack.audioTracks){
-                        if(track.trackHasFile() && !TrackUtilities.trackEquals(track, audioTrack.masterTrack.shortestAudioTrack)){
+                        if(TrackUtilities.trackHasFile(track) && !TrackUtilities.trackEquals(track, audioTrack.masterTrack.shortestAudioTrack)){
                             track.PPRButton.setText(newValue);
                             if(newValue.equals("Pause") && !track.mediaPlayer.getStatus().equals(MediaPlayer.Status.PLAYING)){
                                 track.mediaPlayer.play();
@@ -101,12 +102,12 @@ public class AudioTrackListeners {
         return new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observableValue, Number oldValue, Number newValue) {
-                audioTrack.bindCurrentTimeLabel();
+                bindCurrentTimeLabel(audioTrack);
                 double currentTime = audioTrack.mediaPlayer.getCurrentTime().toSeconds();
                 if(Math.abs(currentTime - newValue.doubleValue()) > 0.5){
                     audioTrack.mediaPlayer.seek(Duration.seconds(newValue.doubleValue()));
                 }
-                audioTrack.labelMatchEndSong(audioTrack.currentTimeLabel.getText(), audioTrack.totalTimeLabel.getText());
+                TrackUtilities.compareTimeLabels(audioTrack);
             }
         };
     }
@@ -115,13 +116,13 @@ public class AudioTrackListeners {
         return new ChangeListener<Duration>() {
             @Override
             public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTime, Duration newTime) {
-                audioTrack.bindCurrentTimeLabel();
+                bindCurrentTimeLabel(audioTrack);
                 if(!audioTrack.timeSlider.isValueChanging()){
                     if(audioTrack.timeSlider.getValue() != audioTrack.timeSlider.getMax()){ // This is needed to address a bug that likely involves the pauseTime mechanic.
                         audioTrack.timeSlider.setValue(newTime.toSeconds());
                     }
                 }
-                audioTrack.labelMatchEndSong(audioTrack.currentTimeLabel.getText(), audioTrack.totalTimeLabel.getText());
+                TrackUtilities.compareTimeLabels(audioTrack);
             }
         };
     }
@@ -130,7 +131,7 @@ public class AudioTrackListeners {
         return new Runnable() {
             @Override
             public void run() {
-                audioTrack.bindCurrentTimeLabel();
+                bindCurrentTimeLabel(audioTrack);
                 audioTrack.PPRButton.setText("Restart");
                 audioTrack.atEndOfMedia = true;
             }
@@ -141,7 +142,7 @@ public class AudioTrackListeners {
         return new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                audioTrack.bindCurrentTimeLabel();
+                bindCurrentTimeLabel(audioTrack);
                 audioTrack.pauseTime = audioTrack.mediaPlayer.getCurrentTime().toSeconds();
             }
         };
@@ -216,8 +217,8 @@ public class AudioTrackListeners {
                 // Update GUI properties.
                 audioTrack.audioLabel.setText(audioTrack.audioFile.getName());
                 audioTrack.timeSlider.setMax(audioTrack.mediaPlayer.getTotalDuration().toSeconds());
-                audioTrack.totalTimeLabel.setText(Track.getTime(audioTrack.mediaPlayer.getTotalDuration()));
-                audioTrack.bindCurrentTimeLabel();
+                audioTrack.totalTimeLabel.setText(TrackUtilities.getTime(audioTrack.mediaPlayer.getTotalDuration()));
+                bindCurrentTimeLabel(audioTrack);
 
                 // Automatically update the shortest track when a new track is added or the file of an existing track changes.
                 // Remove audioTrack from masterTrack.audioTracksSortedByDuration if needed.
@@ -227,7 +228,7 @@ public class AudioTrackListeners {
                     if(result.isPresent() && result.get() == ButtonType.OK) System.exit(1);
                 }
                 audioTrack.masterTrack.audioTracksSortedByDuration.add(audioTrack);
-                audioTrack.masterTrack.refreshShortestAudioTrack();
+                TrackUtilities.refreshShortestAudioTrack(audioTrack.masterTrack);
 
                 // Refresh sync if needed.
                 if(audioTrack.masterTrack.synced) audioTrack.masterTrack.refreshSync();
@@ -384,5 +385,28 @@ public class AudioTrackListeners {
     static void refreshListeners(AudioTrack audioTrack){
         removeAllListeners(audioTrack);
         addAllListeners(audioTrack);
+    }
+
+    static void bindCurrentTimeLabel(AudioTrack audioTrack){
+        audioTrack.currentTimeLabel.textProperty().bind(Bindings.createStringBinding(new Callable<String>() {
+            @Override
+            public String call() {
+                // Check where the time slider is.
+                if(audioTrack.timeSlider.getValue() == audioTrack.timeSlider.getMax()){
+                    if(audioTrack.masterTrack.synced){
+                        return TrackUtilities.getTime(audioTrack.masterTrack.shortestAudioTrack.mediaPlayer.getTotalDuration()) + " / ";
+                    }
+                    else{
+                        return TrackUtilities.getTime(audioTrack.mediaPlayer.getTotalDuration()) + " / ";
+                    }
+                }
+                else if(audioTrack.timeSlider.getValue() == 0.0){
+                    return TrackUtilities.getTime(audioTrack.mediaPlayer.getStartTime()) + " / ";
+                }
+                else{
+                    return TrackUtilities.getTime(audioTrack.mediaPlayer.getCurrentTime()) + " / ";
+                }
+            }
+        }, audioTrack.mediaPlayer.currentTimeProperty()));
     }
 }

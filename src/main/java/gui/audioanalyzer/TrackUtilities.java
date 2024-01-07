@@ -1,6 +1,7 @@
 package gui.audioanalyzer;
 
 import javafx.scene.control.Button;
+import javafx.util.Duration;
 import java.util.ArrayList;
 
 /**
@@ -8,17 +9,14 @@ import java.util.ArrayList;
  */
 public class TrackUtilities {
 
-    static AudioTrack getFocusedTrack(ArrayList<AudioTrack> tracks){
-        for(AudioTrack track: tracks){
-            if(track.focused) return track;
-        }
-        return null;
-    }
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- State Query Methods ------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
 
     static boolean onlyOneTrackHasFile(ArrayList<AudioTrack> tracks){
         int tracksWithFiles = 0;
         for(AudioTrack track: tracks){
-            if(track.trackHasFile()){
+            if(trackHasFile(track)){
                 tracksWithFiles++;
             }
         }
@@ -45,9 +43,85 @@ public class TrackUtilities {
      */
     static boolean someTrackHasFile(ArrayList<AudioTrack> tracks){
         for(AudioTrack track: tracks){
-            if(track.trackHasFile()) return true;
+            if(trackHasFile(track)) return true;
         }
         return false;
+    }
+
+    /**
+     * Determines if two tracks are equal.
+     * @param trackOne The first track to compare.
+     * @param trackTwo The second track to compare.
+     * @return True if trackOne and trackTwo have the same trackNumber, false otherwise.
+     */
+    static boolean trackEquals(AudioTrack trackOne, AudioTrack trackTwo){
+        return trackOne.trackNumber == trackTwo.trackNumber;
+    }
+
+    static int emptyTracks(ArrayList<AudioTrack> audioTracks){
+        int emptyTracks = 0;
+        for(AudioTrack track: audioTracks){
+            if(!trackHasFile(track)){
+                emptyTracks++;
+            }
+        }
+        return emptyTracks;
+    }
+
+    static void compareTimeLabels(AudioTrack audioTrack){
+        boolean updateMasterPPRText = false;
+        if(audioTrack.masterTrack.synced && audioTrack.masterTrack.shortestAudioTrack != null && trackEquals(audioTrack, audioTrack.masterTrack.shortestAudioTrack)){
+            updateMasterPPRText = true;
+        }
+
+        if(!updateMasterPPRText){
+            if(audioTrack.masterTrack.synced) return;
+            for(int i = 0; i < audioTrack.totalTimeLabel.getText().length(); i++){
+                if(audioTrack.currentTimeLabel.getText().charAt(i) != audioTrack.totalTimeLabel.getText().charAt(i)){
+                    audioTrack.atEndOfMedia = false;
+                    if(audioTrack.isPlaying){
+                        audioTrack.PPRButton.setText("Pause");
+                    }
+                    else{
+                        audioTrack.PPRButton.setText("Play");
+                    }
+                    return;
+                }
+            }
+            audioTrack.atEndOfMedia = true;
+            audioTrack.PPRButton.setText("Restart");
+        }
+        else{
+            for(int i = 0; i < audioTrack.totalTimeLabel.getText().length(); i++){
+                if(audioTrack.currentTimeLabel.getText().charAt(i) != audioTrack.totalTimeLabel.getText().charAt(i)){
+                    audioTrack.atEndOfMedia = false;
+                    if(audioTrack.isPlaying){
+                        audioTrack.PPRButton.setText("Pause");
+                    }
+                    else{
+                        audioTrack.PPRButton.setText("Play");
+                    }
+                    return;
+                }
+            }
+            audioTrack.atEndOfMedia = true;
+            audioTrack.PPRButton.setText("Restart");
+        }
+    }
+
+    static boolean trackHasFile(AudioTrack track){
+        return (track.audioFile != null) && (track.media != null) && (track.mediaPlayer != null);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- State Management Methods -------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
+
+    static AudioTrack getFocusedTrack(ArrayList<AudioTrack> tracks){
+        for(AudioTrack track: tracks){
+            if(track.focused) return track;
+        }
+        return null;
     }
 
     static void sortAudioTracksByDuration(ArrayList<AudioTrack> tracks){
@@ -73,38 +147,6 @@ public class TrackUtilities {
         }
     }
 
-    /**
-     * Determines if two tracks are equal.
-     * @param trackOne The first track to compare.
-     * @param trackTwo The second track to compare.
-     * @return True if trackOne and trackTwo have the same trackNumber, false otherwise.
-     */
-    static boolean trackEquals(AudioTrack trackOne, AudioTrack trackTwo){
-        return trackOne.trackNumber == trackTwo.trackNumber;
-    }
-
-    static int emptyTracks(ArrayList<AudioTrack> audioTracks){
-        int emptyTracks = 0;
-        for(AudioTrack track: audioTracks){
-            if(!track.trackHasFile()){
-                emptyTracks++;
-            }
-        }
-        return emptyTracks;
-    }
-
-    static void printAudioTracksSortedByDuration(MasterTrack masterTrack){
-        for(int i = 0; i < masterTrack.audioTracksSortedByDuration.size(); i++){
-            AudioTrack track = masterTrack.audioTracksSortedByDuration.get(i);
-            if(track.mediaPlayer == null){
-                System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (null)");
-            }
-            else{
-                System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (" + track.mediaPlayer.getTotalDuration().toSeconds() + ")");
-            }
-        }
-    }
-
     static boolean removeTrackByNumber(ArrayList<AudioTrack> tracks, int trackNumber){
         for(int i = 0; i < tracks.size(); i++){
             if(tracks.get(i).trackNumber == trackNumber){
@@ -113,13 +155,6 @@ public class TrackUtilities {
             }
         }
         return false;
-    }
-
-    static AudioTrack getAudioTrackByNumber(MasterTrack masterTrack, int trackNumber){
-        for(AudioTrack track: masterTrack.audioTracks){
-            if(track.trackNumber == trackNumber) return track;
-        }
-        return null;
     }
 
     static void forceFire(Button button){
@@ -143,7 +178,7 @@ public class TrackUtilities {
         masterTrack.timeSlider.setValue(0.0);
         masterTrack.volumeSlider.setValue(1.0);
         for(AudioTrack track: masterTrack.audioTracks){
-            if(track.trackHasFile()){
+            if(trackHasFile(track)){
                 track.mediaPlayer.seek(track.mediaPlayer.getStartTime());
                 track.mediaPlayer.pause();
             }
@@ -174,7 +209,7 @@ public class TrackUtilities {
         }
 
         for(AudioTrack track: masterTrack.audioTracks){
-            if(track.trackHasFile() && !masterTrack.synced){
+            if(trackHasFile(track) && !masterTrack.synced){
                 track.PPRButton.setDisable(false);
                 track.timeSlider.setDisable(false);
                 track.volumeSlider.setDisable(false);
@@ -186,23 +221,158 @@ public class TrackUtilities {
             }
         }
 
-        masterTrack.refreshSwitchDisabledStatus();
-        masterTrack.refreshSyncDisabledStatus();
+        refreshSwitchDisabledStatus(masterTrack);
+        refreshSyncDisabledStatus(masterTrack);
     }
 
-    static void printAllVolumeSliderValues(ArrayList<AudioTrack> tracks){
-        for(AudioTrack track: tracks){
-            System.out.println("For track " + track.trackNumber + ", volumeSlider.getValue() = " + track.volumeSlider.getValue());
+    static void refreshTrackNumbers(ArrayList<AudioTrack> tracks){
+        for(int i = 0; i < tracks.size(); i++){
+            AudioTrack track = tracks.get(i);
+            track.trackNumber = i + 1;
+            track.trackLabel.setText("Track " + track.trackNumber);
         }
-        System.out.println("");
     }
 
-    static void printAllTrackStates(ArrayList<AudioTrack> tracks){
-        for(AudioTrack track: tracks){
-            track.printState();
-            System.out.println("");
-//                        System.out.println("Track " + track.trackNumber + ": " + "audioLabel = " + track.audioLabel.getText() + ", focused = " + track.focused);
+    static void refreshShortestAudioTrack(MasterTrack masterTrack){
+        if(masterTrack.audioTracksSortedByDuration.size() > 0){
+            TrackUtilities.sortAudioTracksByDuration(masterTrack.audioTracksSortedByDuration);
+            masterTrack.shortestAudioTrack = masterTrack.audioTracksSortedByDuration.get(0);
+
+            // These properties don't need to be bound with formal bindings.
+            masterTrack.totalTimeLabel.setText(masterTrack.shortestAudioTrack.totalTimeLabel.getText());
+            masterTrack.timeSlider.setMax(masterTrack.shortestAudioTrack.mediaPlayer.getTotalDuration().toSeconds());
         }
-        System.out.println("");
+        else{
+            masterTrack.shortestAudioTrack = null;
+            masterTrack.totalTimeLabel.setText("00:00");
+            masterTrack.timeSlider.setMax(MasterTrack.TIME_SLIDER_DEFAULT_MAX);
+        }
+    }
+
+    static void refreshSwitchDisabledStatus(MasterTrack masterTrack){
+        if(!TrackUtilities.isSomeTrackFocused(masterTrack.audioTracks)){
+            masterTrack.switchButton.setDisable(true);
+        }
+        else if(!TrackUtilities.someTrackHasFile(masterTrack.audioTracks)){
+            masterTrack.switchButton.setDisable(true);
+        }
+        else if(TrackUtilities.onlyOneTrackHasFile(masterTrack.audioTracks)){
+            masterTrack.switchButton.setDisable(true);
+        }
+        else{
+            masterTrack.switchButton.setDisable(false);
+        }
+    }
+
+    static void refreshSyncDisabledStatus(MasterTrack masterTrack){
+        if(TrackUtilities.someTrackHasFile(masterTrack.audioTracks)){
+            masterTrack.syncButton.setDisable(false);
+        }
+        else{
+            masterTrack.syncButton.setDisable(true);
+            masterTrack.syncButton.setText("Sync");
+            masterTrack.synced = false;
+        }
+    }
+
+    static void refreshMasterPPRText(MasterTrack masterTrack){
+        if(masterTrack.synced){
+            if(TrackUtilities.isSomeTrackPlaying(masterTrack.audioTracks)){
+                masterTrack.PPRButton.setText("Pause");
+            }
+            else{
+                masterTrack.PPRButton.setText("Play");
+            }
+            return;
+        }
+
+        // Out of all tracks with files, find out how many are playing, paused, and finished.
+        int nonEmptyTracks = masterTrack.audioTracks.size() - TrackUtilities.emptyTracks(masterTrack.audioTracks);
+        int finishedTracks = 0;
+        int playingTracks = 0;
+        int pausedTracks = 0;
+
+        for(AudioTrack track: masterTrack.audioTracks){
+            if(trackHasFile(track)){
+                if(track.PPRButton.getText().equals("Play")){
+                    pausedTracks++;
+                }
+                else if(track.PPRButton.getText().equals("Pause")){
+                    playingTracks++;
+                }
+                else{
+                    finishedTracks++;
+                }
+            }
+        }
+        if(pausedTracks == nonEmptyTracks){
+            masterTrack.PPRButton.setText("Play");
+        }
+        else if(playingTracks == nonEmptyTracks){
+            masterTrack.PPRButton.setText("Pause");
+        }
+        else if(finishedTracks == nonEmptyTracks){
+            masterTrack.PPRButton.setText("Restart");
+        }
+        else {
+            masterTrack.PPRButton.setText("Press All");
+        }
+    }
+
+    static String getTime(Duration time){
+        int hours = (int) time.toHours();
+        int minutes = (int) time.toMinutes();
+        int seconds = (int) time.toSeconds();
+
+        if(seconds > 59) seconds = seconds % 60;
+        if(minutes > 59) minutes = minutes % 60;
+        if(hours > 59) hours = hours % 60;
+
+        if(hours > 0){
+            // System.out.printf("getTime(%f) returned %s.%n", time.toSeconds(), String.format("%d:%02d:%02d", hours, minutes, seconds));
+            return String.format("%d:%02d:%02d", hours, minutes, seconds);
+        }
+        else{
+            // System.out.printf("getTime(%f) returned %s.%n", time.toSeconds(), String.format("%02d:%02d", minutes, seconds));
+            return String.format("%02d:%02d", minutes, seconds);
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------- Debugging Methods --------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------
+
+    static void printAudioTracksSortedByDuration(MasterTrack masterTrack){
+        for(int i = 0; i < masterTrack.audioTracksSortedByDuration.size(); i++){
+            AudioTrack track = masterTrack.audioTracksSortedByDuration.get(i);
+            if(track.mediaPlayer == null){
+                System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (null)");
+            }
+            else{
+                System.out.println("audioTracksSortedByDuration[" + i + "] = " + track.trackNumber + " (" + track.mediaPlayer.getTotalDuration().toSeconds() + ")");
+            }
+        }
+    }
+
+    static void printState(AudioTrack audioTrack){
+        System.out.println("Track number: " + audioTrack.trackNumber);
+        if(trackHasFile(audioTrack)){
+            System.out.println("audioFile.getName(): " + audioTrack.audioFile.getName());
+            System.out.println("media.toString(): " + audioTrack.media.toString());
+            System.out.println("mediaPlayer.getStatus(): " + audioTrack.mediaPlayer.getStatus());
+            System.out.println("atEndOfMedia: " + audioTrack.atEndOfMedia);
+            System.out.println("isPlaying: " + audioTrack.isPlaying);
+            System.out.println("isMuted: " + audioTrack.isMuted);
+            System.out.println("pauseTime: " + audioTrack.pauseTime);
+            System.out.println("focused: " + audioTrack.focused);
+            System.out.println("synced: " + audioTrack.synced);
+
+            System.out.println("volumeSlider.getValue(): " + audioTrack.volumeSlider.getValue());
+            System.out.println("timeSlider.getValue(): " + audioTrack.timeSlider.getValue());
+            System.out.println("mediaPlayer.getCurrentTime(): " + audioTrack.mediaPlayer.getCurrentTime().toSeconds());
+        }
+        else{
+            System.out.println("<no file>");
+        }
     }
 }

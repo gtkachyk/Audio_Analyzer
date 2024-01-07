@@ -6,7 +6,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Slider;
-import javafx.util.Duration;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -87,25 +86,6 @@ public abstract class Track {
     }
 
     abstract void initializeTrack();
-
-    static String getTime(Duration time){
-        int hours = (int) time.toHours();
-        int minutes = (int) time.toMinutes();
-        int seconds = (int) time.toSeconds();
-
-        if(seconds > 59) seconds = seconds % 60;
-        if(minutes > 59) minutes = minutes % 60;
-        if(hours > 59) hours = hours % 60;
-
-        if(hours > 0){
-            // System.out.printf("getTime(%f) returned %s.%n", time.toSeconds(), String.format("%d:%02d:%02d", hours, minutes, seconds));
-            return String.format("%d:%02d:%02d", hours, minutes, seconds);
-        }
-        else{
-            // System.out.printf("getTime(%f) returned %s.%n", time.toSeconds(), String.format("%02d:%02d", minutes, seconds));
-            return String.format("%02d:%02d", minutes, seconds);
-        }
-    }
 
     abstract TrackCoordinates getTrackCoordinates();
 }

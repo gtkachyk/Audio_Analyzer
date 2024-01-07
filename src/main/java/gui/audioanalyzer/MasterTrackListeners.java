@@ -1,6 +1,5 @@
 package gui.audioanalyzer;
 
-import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -8,7 +7,6 @@ import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
 public class MasterTrackListeners {
@@ -17,7 +15,7 @@ public class MasterTrackListeners {
         return new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue observableValue, Number oldValue, Number newValue) {
-                masterTrack.currentTimeLabel.setText(Track.getTime(new Duration(masterTrack.timeSlider.getValue() * MasterTrack.MILLISECONDS_PER_SECOND)) + " / ");
+                masterTrack.currentTimeLabel.setText(TrackUtilities.getTime(new Duration(masterTrack.timeSlider.getValue() * MasterTrack.MILLISECONDS_PER_SECOND)) + " / ");
             }
         };
     }
@@ -36,7 +34,7 @@ public class MasterTrackListeners {
                 boolean foundTrackToFocus = false;
                 while(!foundTrackToFocus){
                     if(masterTrack.audioTracks.size() == indexOfNextFocusTrack){
-                        if(masterTrack.audioTracks.get(0).trackHasFile()){
+                        if(TrackUtilities.trackHasFile(masterTrack.audioTracks.get(0))){
                             indexOfNextFocusTrack = 0;
                             foundTrackToFocus = true;
                         }
@@ -44,7 +42,7 @@ public class MasterTrackListeners {
                             indexOfNextFocusTrack = 1;
                         }
                     }
-                    else if(masterTrack.audioTracks.get(indexOfNextFocusTrack).trackHasFile()){
+                    else if(TrackUtilities.trackHasFile(masterTrack.audioTracks.get(indexOfNextFocusTrack))){
                         foundTrackToFocus = true;
                         masterTrack.audioTracks.get(indexOfNextFocusTrack).focusTrack();
                     }
@@ -64,7 +62,7 @@ public class MasterTrackListeners {
                 if(masterTrack.synced){
                     // Mute audio if scrubbing.
                     for(AudioTrack track: masterTrack.audioTracks){
-                        if(track.trackHasFile()){
+                        if(TrackUtilities.trackHasFile(track)){
                             track.mediaPlayer.setMute(true);
                             track.isMuted = true;
                         }
@@ -81,7 +79,7 @@ public class MasterTrackListeners {
                 if(masterTrack.synced){
                     // Un-mute audio after scrubbing.
                     for(AudioTrack track: masterTrack.audioTracks){
-                        if(track.trackHasFile()){
+                        if(TrackUtilities.trackHasFile(track)){
                             track.mediaPlayer.setMute(false);
                             track.isMuted = false;
                             track.pauseTime = track.mediaPlayer.getCurrentTime().toSeconds(); // Update pause time.
@@ -160,7 +158,7 @@ public class MasterTrackListeners {
                 if(masterTrack.PPRButton.getText().equals("Pause")){
                     if(masterTrack.synced){
                         for(AudioTrack track: masterTrack.audioTracks){
-                            if(track.trackHasFile()){
+                            if(TrackUtilities.trackHasFile(track)){
                                 if(track.isPlaying){
                                     if(!track.PPRButton.getText().equals("Restart")){
                                         track.pauseTrack();
@@ -177,17 +175,17 @@ public class MasterTrackListeners {
                     }
                     else{
                         for(AudioTrack track: masterTrack.audioTracks){
-                            if(track.trackHasFile() && track.isPlaying){
+                            if(TrackUtilities.trackHasFile(track) && track.isPlaying){
                                 TrackUtilities.forceFire(track.PPRButton);
                             }
                         }
                     }
-                    masterTrack.refreshPPRText();
+                    TrackUtilities.refreshMasterPPRText(masterTrack);
                 }
                 else if(masterTrack.PPRButton.getText().equals("Play")){
                     if(masterTrack.synced){
                         for(AudioTrack track: masterTrack.audioTracks){
-                            if(track.trackHasFile()){
+                            if(TrackUtilities.trackHasFile(track)){
                                 if(!track.isPlaying){
                                     if(!track.PPRButton.getText().equals("Restart")){
                                         track.playTrack();
@@ -203,7 +201,7 @@ public class MasterTrackListeners {
                     }
                     else{
                         for(AudioTrack track: masterTrack.audioTracks){
-                            if(track.trackHasFile() && !track.isPlaying){
+                            if(TrackUtilities.trackHasFile(track) && !track.isPlaying){
                                 TrackUtilities.forceFire(track.PPRButton);
                             }
                         }
@@ -214,7 +212,7 @@ public class MasterTrackListeners {
                     if(masterTrack.synced){
                         masterTrack.timeSlider.setValue(0.0);
                         for(AudioTrack track: masterTrack.audioTracks){
-                            if(track.trackHasFile()){
+                            if(TrackUtilities.trackHasFile(track)){
                                 track.pauseTime = 0.0;
                             }
                         }
@@ -223,7 +221,7 @@ public class MasterTrackListeners {
                     }
                     else{
                         for(AudioTrack track: masterTrack.audioTracks){
-                            if(track.trackHasFile()){
+                            if(TrackUtilities.trackHasFile(track)){
                                 track.PPRButton.fire();
                             }
                         }
@@ -231,11 +229,11 @@ public class MasterTrackListeners {
                 }
                 else if(masterTrack.PPRButton.getText().equals("Press All")){
                     for(AudioTrack track: masterTrack.audioTracks){
-                        if(track.trackHasFile()){
+                        if(TrackUtilities.trackHasFile(track)){
                             track.PPRButton.fire();
                         }
                     }
-                    masterTrack.refreshPPRText();
+                    TrackUtilities.refreshMasterPPRText(masterTrack);
                 }
             }
         };
@@ -247,7 +245,7 @@ public class MasterTrackListeners {
             public void handle(ActionEvent event) {
                 if(masterTrack.debugReportButton.getText().equals("Debug")){
                     for(AudioTrack track: masterTrack.audioTracks){
-                        track.printState();
+                        TrackUtilities.printState(track);
                         System.out.println("");
 //                        System.out.println("Track " + track.trackNumber + ": " + "audioLabel = " + track.audioLabel.getText() + ", focused = " + track.focused);
                     }

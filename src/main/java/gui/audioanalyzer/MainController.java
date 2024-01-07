@@ -13,7 +13,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
@@ -21,7 +20,7 @@ import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
 
-    // Data.
+    // JavaFX objects.
     @FXML
     VBox vBox;
     @FXML
@@ -31,7 +30,7 @@ public class MainController implements Initializable {
     @FXML
     MenuItem menuItem;
 
-    private MasterTrack masterTrack; // Private so masterTrack can't access itself through masterTrack.controller.
+    private MasterTrack masterTrack;
     boolean darkMode = false;
 
     /**
